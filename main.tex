@@ -1,0 +1,120 @@
+\documentclass[11pt,a4paper,oneside]{report}
+\usepackage{setup}
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0pt}
+\captionsetup{font=small}
+
+\begin{document}
+
+% ------------------------------------------------
+% Front matter
+% ------------------------------------------------
+\pagenumbering{gobble}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\centering
+
+\vspace*{0.7cm}
+
+\includegraphics[width=0.5\textwidth]{Figures/VU_Logo.png}
+
+\vspace{1.6cm}
+
+{\huge Master Thesis\par}
+
+\vspace{0.7cm}
+\noindent\rule{0.82\textwidth}{0.5pt}\par
+\vspace{0.7cm}
+
+{\Huge\bfseries An Agent-Based Model of CCP Systemic Risk: Client Clearing, Crowding and Liquidity\par}
+% Replace with final thesis title
+
+\vspace{0.7cm}
+\noindent\rule{0.82\textwidth}{0.5pt}\par
+
+\vspace{1.2cm}
+
+{\large by\par}
+\vspace{0.5cm}
+
+{\Large\bfseries Siddharth Yash Kukreja\par}
+\vspace{0.3cm}
+{\large (2902483)\par}
+
+\vspace{1.6cm}
+
+\begin{tabular}{rl}
+\textit{Supervisor:} & Dr.\ Rex Wang Renjie\\
+\textit{Second Assessor:} & Prof. Dr. Albert Menkveld \\
+\end{tabular}
+
+\vspace{1.6cm}
+
+{\small
+Submitted in partial fulfillment of the requirements for the\\
+Master of Science in Finance - Honours Programme in Quantitative Finance.\\
+Vrije Universiteit Amsterdam
+\par}
+
+\vspace*{1.5cm}
+\end{titlepage}
+
+% ------------------------------------------------
+% Abstract + contents
+% ------------------------------------------------
+\clearpage
+\pagenumbering{roman}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\input{chapters/00_abstract}
+
+\clearpage
+\tableofcontents
+\clearpage
+
+% ------------------------------------------------
+% Main matter
+% ------------------------------------------------
+\pagenumbering{arabic}
+
+\chapter{Introduction}
+\input{chapters/01_introduction}
+
+\chapter{Related Work}
+\input{chapters/02_related_work}
+
+\chapter{Model Structure}
+\input{chapters/03_model_structure}
+
+\chapter{Model Calibration and Validation}
+\input{chapters/04_model_calibration_validation}
+
+\chapter{Results}
+\input{chapters/05_results}
+
+\chapter{Implications}
+\input{chapters/06_implications}
+
+\chapter{Conclusion}
+\input{chapters/07_conclusion}
+
+% ------------------------------------------------
+% References
+% ------------------------------------------------
+\clearpage
+\bibliographystyle{apalike}
+\bibliography{references}
+
+% ------------------------------------------------
+% Appendices
+% ------------------------------------------------
+\appendix
+
+\chapter{Additional Tables and Figures}
+\input{chapters/A_appendix}
+
+\end{document}
