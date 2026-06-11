@@ -1,0 +1,49 @@
+% Sections only — \chapter{Related Work}\label{ch:related} is in main.tex.
+
+\section{Clearing and Central Counterparties}\label{sec:rw-clearing}
+
+In their article, "The Economics of Central Clearing", \cite{menkveld_vuillemey_2021} offer a systematic review of the theories and empirical studies on Central Clearing. They state that CCPs create value only under the condition that markets are not perfect. A first economic rationale for CCPs is that they bring efficiency gains in the posting of collateral through higher trustworthiness in its segregation and the benefits of multilateral netting \citep{duffie_zhu_2011}. A second rationale is that CCPs serve as insurance against counterparty defaults through loss mutualisation and pooled resources \citep{biais_heider_hoerova_2012}. A third and last rationale for CCPs is their role in mitigating fire sales - when a member defaults, their positions are auctioned amongst surviving members at prices generally higher than what an open market liquidation would bring \citep{vuillemey_2023}. \cite{menkveld_vuillemey_2021} also highlight research questions that remain open for further work -- including the workings of the client clearing market. 
+
+
+
+\subsection{Client Clearing}
+
+\cite{ofr_2026} study client clearing and its implications for market structure and stability by looking at Credit Default Swaps. They found that by January 2025, clients accounted for 73\% of margin posted at the largest US and EU CCPs. They find that the modal client has only a single clearing connection, and that client clearing improves dealers' (Clearing Members') netting benefits which also creates pricing benefits for clients. In periods of stress, these dealers may also stop the provision of clearing services - cutting off their clients exposure to CCPs. \cite{galbiati_soramaki_2013} build a simplified and stylised network model of tiered CCP-clearer-client relationships. They find that tiering reduces CCP total exposure but concentrates it onto fewer, larger GCMs. These extreme exposures to the CCP become larger and less predictable, despite a reduction in the average large exposure. The effect of concentration onto larger GCMs leads to reduced systemic risk for the CCP - large GCMs can internalise more risk due to netting benefits from offsetting client positions. 
+
+\subsection{Margins and Pro-Cyclicality}
+
+
+\section{Agent-Based Models}
+
+
+\subsection{Financial Market Simulations}
+
+\subsection{Clearing Layer}
+
+\subsection{Model Calibration}
+
+
+
+% Most of this literature, however, takes the CCP as its unit of analysis and says comparatively little about the tier beneath it. Clearing membership carries demanding capital and operational requirements, so a CCP's direct members are predominantly large banks and a small number of specialised non-bank clearing firms; the remaining participants---hedge funds, pension funds, smaller banks and proprietary trading firms---reach the CCP only indirectly, as clients of a member that clears on their behalf and passes the CCP's margin requirements through to them \citep{menkveld_vuillemey_2021}. This client-clearing arrangement is economically large but structurally fragile and comparatively understudied: \citet{ofr_2026} report that clients post the majority of margin at the largest CCPs and that the modal client clears through a single member, leaving it with no ready fallback should that member withdraw or fail. Tiering therefore redistributes rather than removes exposure---\citet{galbiati_soramaki_2013} show that interposing a member lowers the CCP's aggregate exposure while raising its expected exposure to the average general clearing member---trading diffuse counterparty risk for a concentrated dependence on a handful of intermediaries.
+
+% The channel through which this dependence transmits stress is margin. As \citet{cont_2017} stresses, central clearing does not remove counterparty risk so much as convert it into liquidity risk: by marking positions to market and calling collateral, the CCP turns unrealised losses into immediate cash demands on its members, who in turn pass them down to their clients. Because risk-based initial margin rises with volatility, these demands are inherently procyclical---they peak precisely when markets are most stressed and funding is scarcest, the feedback that \citet{brunnermeier_pedersen_2009} formalise as a margin--liquidity spiral in which rising margins force asset sales that depress prices and provoke further margin calls. This procyclicality is a structural property of standard margin models rather than a calibration failure: \citet{murphy_2014} document the steepness of model-driven margin increases in stress, while \citet{glasserman_wu_2018} show that the persistence and burstiness of volatility require substantially larger anti-procyclicality buffers than current rules envisage. The binding cost of clearing is therefore liquidity rather than counterparty risk per se. Using bilateral CDS positions, \citet{duffie_scheicher_vuillemey_2015} estimate that, beyond initial margin, a substantial frictional demand arises from moving variation margin through the participant network---requiring precautionary cash buffers and exposing participants to shortfalls when the variation margin they owe must be paid before the offsetting margin they are due is received. These mechanisms were realised in the March 2020 ``dash for cash'', when margin calls across centrally cleared markets spiked and a range of participants struggled to meet variation-margin demands at short notice \citep{esrb_2020, blanck_2025}.
+
+
+% % the CCP-centric quantitative literature; netting trade-offs, collateral, failures
+% \citep{duffie_scheicher_vuillemey_2015,cont_kokholm_2014,ghamami_glasserman_2017,borovkova_2013,bignon_vuillemey_2020}
+
+
+% % the gap; tiering, single-agent dependency, crowding
+% \citep{ofr_2026,ofr_2025,huang_menkveld_yu_2021,menkveld_2017,galbiati_soramaki_2013,jones_perignon_2013}
+
+% % margin as the transmission channel; counterparty risk -> liquidity risk
+% \citep{cont_2017,brunnermeier_pedersen_2009,murphy_2014,glasserman_wu_2018,cruzlopez_2017,esrb_2020_covid,blanck_2025}
+
+
+% \section{Agent-Based Models of Financial Markets}\label{sec:rw-abm}
+% % heterogeneous-agent LOBs reproduce stylised facts; leverage/margin -> instability
+% \citep{cont_2001,cont_2007,lebaron_2006,chiarella_iori_2002,chiarella_iori_perello_2009,majewski_2018,farmer_2005,cont_stoikov_talreja_2008,gould_2013,thurner_2012,aymanns_farmer_2015,bookstaber_2014,vytelingum_2025,almgren_chriss_2000}
+
+
+% % making the market layer earned, not assumed; SMM + surrogate/ML methods
+% \citep{gilli_winker_2003,franke_westerhoff_2012,kunsch_1989,grazzini_richiardi_2015,lamperti_2018,gao_2022_hfabm,gao_2022_xgb,gao_2023,platt_2020,fagiolo_2019}

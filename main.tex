@@ -59,8 +59,21 @@ Master of Science in Finance - Honours Programme in Quantitative Finance.\\
 Vrije Universiteit Amsterdam
 \par}
 
+% ------------------------------------------------
+% Acknowledgements
+% ------------------------------------------------
+
 \vspace*{1.5cm}
 \end{titlepage}
+
+\clearpage
+\pagenumbering{roman}
+
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+\input{chapters/a_acknowledgements}
+
+\clearpage
 
 % ------------------------------------------------
 % Abstract + contents
@@ -81,25 +94,25 @@ Vrije Universiteit Amsterdam
 % ------------------------------------------------
 \pagenumbering{arabic}
 
-\chapter{Introduction}
+\chapter{Introduction}\label{ch:intro}
 \input{chapters/01_introduction}
 
-\chapter{Related Work}
+\chapter{Related Literature}\label{ch:related}
 \input{chapters/02_related_work}
 
-\chapter{Model Structure}
+\chapter{Agent-Based Model for Client Clearing}\label{ch:model}
 \input{chapters/03_model_structure}
 
-\chapter{Model Calibration and Validation}
+\chapter{Model Calibration and Validation}\label{ch:calibration}
 \input{chapters/04_model_calibration_validation}
 
-\chapter{Results}
+\chapter{Results}\label{ch:results}
 \input{chapters/05_results}
 
-\chapter{Implications}
+\chapter{Implications}\label{ch:implications}
 \input{chapters/06_implications}
 
-\chapter{Conclusion}
+\chapter{Conclusion}\label{ch:conclusion}
 \input{chapters/07_conclusion}
 
 % ------------------------------------------------
