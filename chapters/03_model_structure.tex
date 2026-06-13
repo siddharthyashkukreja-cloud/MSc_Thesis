@@ -1,453 +1,453 @@
-%==============================================================================
-%  CHAPTER 3 — MODEL STRUCTURE AND DESIGN
-%------------------------------------------------------------------------------
-%  Style: matches introduction.tex conventions (\citep/\citet authoryear; keys
-%  resolve against introduction_refs.bib + model_refs.bib). Calibration of the
-%  behavioural parameters is deliberately deferred to the Data & Calibration
-%  chapter; this chapter fixes the model's structure and cites the design
-%  source for every mechanism (Simudyne ODD first; deviations flagged inline).
-%==============================================================================
-The model is a discrete-time agent-based simulation of a centrally cleared
-futures market, built in two coupled tiers. The first tier is a
-\emph{market-microstructure layer}: a limit order book (LOB) on which
-heterogeneous traders exchange a single asset --- the E-mini S\&P~500 (ES)
-front-month future --- around an exogenous fundamental-value process derived
-from real ES data. The second tier is a \emph{central-clearing layer} placed
-on top of the first: a central counterparty (CCP), banking and non-banking
-clearing members, and a population of cleared end-clients, connected by the
-star topology of a real clearing system and governed by
-regulation-grounded margin, default-fund, and default-management mechanics.
-The architecture follows the Simudyne CCP Risk Model
-\citep{simudyne_odd,deloitte_ccp}, which this thesis extends in one central
-direction: the ODD's clearing members trade only for their own account,
-whereas here most market participants do not face the CCP directly but clear
-\emph{through} a member --- the client-clearing tier whose stress behaviour
-is the object of study. Throughout, the design rule is that every mechanism
-and constant is taken from a reference model, from regulation, or measured
-from data; where the implementation deviates from the primary reference, the
-deviation is stated and motivated.
+% %==============================================================================
+% %  CHAPTER 3 — MODEL STRUCTURE AND DESIGN
+% %------------------------------------------------------------------------------
+% %  Style: matches introduction.tex conventions (\citep/\citet authoryear; keys
+% %  resolve against introduction_refs.bib + model_refs.bib). Calibration of the
+% %  behavioural parameters is deliberately deferred to the Data & Calibration
+% %  chapter; this chapter fixes the model's structure and cites the design
+% %  source for every mechanism (Simudyne ODD first; deviations flagged inline).
+% %==============================================================================
+% The model is a discrete-time agent-based simulation of a centrally cleared
+% futures market, built in two coupled tiers. The first tier is a
+% \emph{market-microstructure layer}: a limit order book (LOB) on which
+% heterogeneous traders exchange a single asset --- the E-mini S\&P~500 (ES)
+% front-month future --- around an exogenous fundamental-value process derived
+% from real ES data. The second tier is a \emph{central-clearing layer} placed
+% on top of the first: a central counterparty (CCP), banking and non-banking
+% clearing members, and a population of cleared end-clients, connected by the
+% star topology of a real clearing system and governed by
+% regulation-grounded margin, default-fund, and default-management mechanics.
+% The architecture follows the Simudyne CCP Risk Model
+% \citep{simudyne_odd,deloitte_ccp}, which this thesis extends in one central
+% direction: the ODD's clearing members trade only for their own account,
+% whereas here most market participants do not face the CCP directly but clear
+% \emph{through} a member --- the client-clearing tier whose stress behaviour
+% is the object of study. Throughout, the design rule is that every mechanism
+% and constant is taken from a reference model, from regulation, or measured
+% from data; where the implementation deviates from the primary reference, the
+% deviation is stated and motivated.
 
-The two tiers are deliberately asymmetric in how their parameters are set.
-The market layer's behavioural parameters are \emph{calibrated} so that the
-simulated price reproduces the empirical stylised facts of ES returns
-\citep{cont_2001}; the calibration methodology and results are the subject
-of Chapters~4 and~5. The clearing layer contains no free behavioural
-parameters at all: margin rates, default-fund sizing, capital floors, and
-waterfall structure are pinned to their regulatory or reference values. The
-intention is that the clearing tier acts in a market environment that has
-been \emph{earned} from data rather than assumed, while the clearing
-mechanics themselves remain transparent and auditable.
+% The two tiers are deliberately asymmetric in how their parameters are set.
+% The market layer's behavioural parameters are \emph{calibrated} so that the
+% simulated price reproduces the empirical stylised facts of ES returns
+% \citep{cont_2001}; the calibration methodology and results are the subject
+% of Chapters~4 and~5. The clearing layer contains no free behavioural
+% parameters at all: margin rates, default-fund sizing, capital floors, and
+% waterfall structure are pinned to their regulatory or reference values. The
+% intention is that the clearing tier acts in a market environment that has
+% been \emph{earned} from data rather than assumed, while the clearing
+% mechanics themselves remain transparent and auditable.
 
-Time advances in one-minute steps over 6.5-hour regular trading sessions,
-the ODD-native cadence \citep{simudyne_odd}. Two market regimes are used
-throughout: a \emph{calm} regime (calendar year 2019) and a \emph{stressed}
-regime (the COVID-19 crash window, late February to early April 2020), each
-with its own fundamental path and its own calibrated parameter set.
+% Time advances in one-minute steps over 6.5-hour regular trading sessions,
+% the ODD-native cadence \citep{simudyne_odd}. Two market regimes are used
+% throughout: a \emph{calm} regime (calendar year 2019) and a \emph{stressed}
+% regime (the COVID-19 crash window, late February to early April 2020), each
+% with its own fundamental path and its own calibrated parameter set.
 
-%==============================================================================
-\section{The market simulation}
-\label{sec:model-market}
+% %==============================================================================
+% \section{The market simulation}
+% \label{sec:model-market}
 
-The trading venue is a single limit order book with price--time priority and
-a tick size of \$0.25 (the CME ES specification). Orders accumulate during
-each one-minute step and are crossed in a call auction at the step's end;
-executions print at the resting limit price. The mid-price
-$p_t = (b_t + a_t)/2$ is the average of the best bid and ask, falling back
-to the last traded price when one side of the book is empty. Resting orders
-leave the book only by execution or explicit cancellation: the fundamental
-and momentum traders manage a single standing order each by
-\emph{replace-on-new}, while zero-intelligence orders are cancelled
-stochastically at a per-order rate (Section~\ref{sec:model-agents}). This
-deviates from the ODD's blanket ten-step order lifetime, which was removed
-because it was redundant with --- and masked --- the explicit
-\citet{cont_stoikov_talreja_2008} cancellation rate that is the standard
-order-lifetime mechanism in this model class; the deviation is flagged
-against \citet{simudyne_odd}.
+% The trading venue is a single limit order book with price--time priority and
+% a tick size of \$0.25 (the CME ES specification). Orders accumulate during
+% each one-minute step and are crossed in a call auction at the step's end;
+% executions print at the resting limit price. The mid-price
+% $p_t = (b_t + a_t)/2$ is the average of the best bid and ask, falling back
+% to the last traded price when one side of the book is empty. Resting orders
+% leave the book only by execution or explicit cancellation: the fundamental
+% and momentum traders manage a single standing order each by
+% \emph{replace-on-new}, while zero-intelligence orders are cancelled
+% stochastically at a per-order rate (Section~\ref{sec:model-agents}). This
+% deviates from the ODD's blanket ten-step order lifetime, which was removed
+% because it was redundant with --- and masked --- the explicit
+% \citet{cont_stoikov_talreja_2008} cancellation rate that is the standard
+% order-lifetime mechanism in this model class; the deviation is flagged
+% against \citet{simudyne_odd}.
 
-The runtime population places $100$ agents on the book: $30$ fundamental
-traders, $10$ banking clearing members trading their own account with
-identical fundamental-trader logic, $20$ momentum traders, and $40$
-zero-intelligence traders. Off the book sit five non-banking clearing
-members and the CCP. Ninety of the LOB traders are \emph{cleared clients}
-who access the CCP only through a clearing member
-(Section~\ref{sec:model-margin}).
+% The runtime population places $100$ agents on the book: $30$ fundamental
+% traders, $10$ banking clearing members trading their own account with
+% identical fundamental-trader logic, $20$ momentum traders, and $40$
+% zero-intelligence traders. Off the book sit five non-banking clearing
+% members and the CCP. Ninety of the LOB traders are \emph{cleared clients}
+% who access the CCP only through a clearing member
+% (Section~\ref{sec:model-margin}).
 
-%------------------------------------------------------------------------------
-\subsection{Trading agents}
-\label{sec:model-agents}
+% %------------------------------------------------------------------------------
+% \subsection{Trading agents}
+% \label{sec:model-agents}
 
-Three behavioural types populate the book, the canonical
-fundamentalist--chartist--noise decomposition of the Chiarella family
-\citep{chiarella_1992,majewski_2018} in the LOB form of the Simudyne CCP
-model \citep{simudyne_odd}. All arrival decisions are per-step Bernoulli
-draws at the one-minute cadence, and order sizes are uniform,
-$q \sim \mathcal{U}\{1,\dots,10\}$ \citep{simudyne_odd}.
+% Three behavioural types populate the book, the canonical
+% fundamentalist--chartist--noise decomposition of the Chiarella family
+% \citep{chiarella_1992,majewski_2018} in the LOB form of the Simudyne CCP
+% model \citep{simudyne_odd}. All arrival decisions are per-step Bernoulli
+% draws at the one-minute cadence, and order sizes are uniform,
+% $q \sim \mathcal{U}\{1,\dots,10\}$ \citep{simudyne_odd}.
 
-\paragraph{Fundamental traders (FT).}
-Each fundamental trader $i$ holds a fixed idiosyncratic belief draw
-$z_i \sim \mathcal{N}(0,1)$ and forms, at every step, a reservation price
-around the fundamental value $V_t$:
-\begin{equation}
-\label{eq:ft-reservation}
-R_{i,t} \;=\; V_t + z_i \,\sigma^{f}_{t},
-\qquad
-\sigma^{f}_{t} \;=\; c_f\,\sigma_t\,v_0 ,
-\end{equation}
-where $\sigma_t$ is the prevailing local volatility of the fundamental
-(Section~\ref{sec:model-fv}), $v_0$ the regime's initial price level, and
-$c_f$ a calibrated scale governing the dispersion of beliefs --- the
-volatility-tracking belief width of the Deloitte specification
-\citep{deloitte_ccp}, which widens the reservation cloud in turbulent
-periods. The trader submits one limit order \emph{at} its reservation price
-on the side implied by its own mispricing,
-$\mathrm{sign}(R_{i,t} - p_{t-1})$, replacing any order it has standing.
-Because $z_i$ is persistent rather than redrawn, optimistic traders
-accumulate long inventories and pessimistic ones short inventories over
-time; this heterogeneous-beliefs specification
-\citep{chiarella_1992,majewski_2018} is load-bearing for the clearing tier,
-since margin calls and default management act on exactly these concentrated
-positions.
+% \paragraph{Fundamental traders (FT).}
+% Each fundamental trader $i$ holds a fixed idiosyncratic belief draw
+% $z_i \sim \mathcal{N}(0,1)$ and forms, at every step, a reservation price
+% around the fundamental value $V_t$:
+% \begin{equation}
+% \label{eq:ft-reservation}
+% R_{i,t} \;=\; V_t + z_i \,\sigma^{f}_{t},
+% \qquad
+% \sigma^{f}_{t} \;=\; c_f\,\sigma_t\,v_0 ,
+% \end{equation}
+% where $\sigma_t$ is the prevailing local volatility of the fundamental
+% (Section~\ref{sec:model-fv}), $v_0$ the regime's initial price level, and
+% $c_f$ a calibrated scale governing the dispersion of beliefs --- the
+% volatility-tracking belief width of the Deloitte specification
+% \citep{deloitte_ccp}, which widens the reservation cloud in turbulent
+% periods. The trader submits one limit order \emph{at} its reservation price
+% on the side implied by its own mispricing,
+% $\mathrm{sign}(R_{i,t} - p_{t-1})$, replacing any order it has standing.
+% Because $z_i$ is persistent rather than redrawn, optimistic traders
+% accumulate long inventories and pessimistic ones short inventories over
+% time; this heterogeneous-beliefs specification
+% \citep{chiarella_1992,majewski_2018} is load-bearing for the clearing tier,
+% since margin calls and default management act on exactly these concentrated
+% positions.
 
-\paragraph{Momentum traders (MT).}
-Each momentum trader tracks an exponentially weighted moving average of
-one-minute mid log-returns $r_t = \ln p_t - \ln p_{t-1}$,
-\begin{equation}
-\label{eq:mt-ewma}
-M_t \;=\; (1-\lambda)\,M_{t-1} + \lambda\, r_{t-1},
-\end{equation}
-and, whenever $|M_t|$ clears a small activation floor, posts a single
-passive limit order on the trend side at a stochastic depth of
-$k \sim \mathrm{Geom}(p_{\mathrm{zi}})$ ticks from the mid, managed
-replace-on-new. The trend horizon $\lambda$ is fixed by design rather than
-estimated, following \citet{majewski_2018}, who likewise impose the
-chartist timescale externally. Momentum traders are limit-only: an earlier
-market-order branch was removed because trend-chasing marketable flow
-corrupted the near-zero autocorrelation of simulated returns.
+% \paragraph{Momentum traders (MT).}
+% Each momentum trader tracks an exponentially weighted moving average of
+% one-minute mid log-returns $r_t = \ln p_t - \ln p_{t-1}$,
+% \begin{equation}
+% \label{eq:mt-ewma}
+% M_t \;=\; (1-\lambda)\,M_{t-1} + \lambda\, r_{t-1},
+% \end{equation}
+% and, whenever $|M_t|$ clears a small activation floor, posts a single
+% passive limit order on the trend side at a stochastic depth of
+% $k \sim \mathrm{Geom}(p_{\mathrm{zi}})$ ticks from the mid, managed
+% replace-on-new. The trend horizon $\lambda$ is fixed by design rather than
+% estimated, following \citet{majewski_2018}, who likewise impose the
+% chartist timescale externally. Momentum traders are limit-only: an earlier
+% market-order branch was removed because trend-chasing marketable flow
+% corrupted the near-zero autocorrelation of simulated returns.
 
-\paragraph{Zero-intelligence traders (ZI).}
-The liquidity floor of the book is supplied by zero-intelligence traders in
-the tradition of \citet{farmer_2005} and \citet{cont_stoikov_talreja_2008}.
-In each step a ZI trader independently (i) cancels each of its resting
-orders with probability $\delta_{\mathrm{zi}}$, (ii) submits a limit order
-with probability $\alpha_{\mathrm{zi}}$ at a uniformly random side and a
-geometric depth $k \sim \mathrm{Geom}(p_{\mathrm{zi}})$ from the mid, and
-(iii) submits a market order with probability $\mu_{\mathrm{zi}}$, with no
-dependence on any signal. The placement parameter $p_{\mathrm{zi}}$ is not a
-free parameter: it is fitted by maximum likelihood to the depth distribution
-of new order arrivals in ES market-by-price (MBP-10) data, so the simulated
-book's near-mid thickness is anchored to the measured one. The arrival and
-cancellation rates are calibrated; the market-order rate is pinned at the
-\citet{cont_stoikov_talreja_2008} baseline.
+% \paragraph{Zero-intelligence traders (ZI).}
+% The liquidity floor of the book is supplied by zero-intelligence traders in
+% the tradition of \citet{farmer_2005} and \citet{cont_stoikov_talreja_2008}.
+% In each step a ZI trader independently (i) cancels each of its resting
+% orders with probability $\delta_{\mathrm{zi}}$, (ii) submits a limit order
+% with probability $\alpha_{\mathrm{zi}}$ at a uniformly random side and a
+% geometric depth $k \sim \mathrm{Geom}(p_{\mathrm{zi}})$ from the mid, and
+% (iii) submits a market order with probability $\mu_{\mathrm{zi}}$, with no
+% dependence on any signal. The placement parameter $p_{\mathrm{zi}}$ is not a
+% free parameter: it is fitted by maximum likelihood to the depth distribution
+% of new order arrivals in ES market-by-price (MBP-10) data, so the simulated
+% book's near-mid thickness is anchored to the measured one. The arrival and
+% cancellation rates are calibrated; the market-order rate is pinned at the
+% \citet{cont_stoikov_talreja_2008} baseline.
 
-Two agent types that appear in related designs are deliberately absent. An
-always-quoting market maker \citep{gao_2022_hfabm} and a volatility trader
-\citep{gao_2023} were both implemented and removed after an ablation study
-showed the former damps volatility and clustering in both regimes while the
-latter helps only under stress; the ablation is reported with the
-calibration results.
+% Two agent types that appear in related designs are deliberately absent. An
+% always-quoting market maker \citep{gao_2022_hfabm} and a volatility trader
+% \citep{gao_2023} were both implemented and removed after an ablation study
+% showed the former damps volatility and clustering in both regimes while the
+% latter helps only under stress; the ablation is reported with the
+% calibration results.
 
-%------------------------------------------------------------------------------
-\subsection{The fundamental value process}
-\label{sec:model-fv}
+% %------------------------------------------------------------------------------
+% \subsection{The fundamental value process}
+% \label{sec:model-fv}
 
-The fundamental $V_t$ is exogenous to the simulation: a path generated
-offline and read in as a time series, following the data-driven fundamental
-signal of the ODD \citep{simudyne_odd} and the data-derived fundamental of
-the XGB-Chiarella line \citep{gao_2022_xgb}. Two interchangeable generators
-are used, with distinct roles.
+% The fundamental $V_t$ is exogenous to the simulation: a path generated
+% offline and read in as a time series, following the data-driven fundamental
+% signal of the ODD \citep{simudyne_odd} and the data-derived fundamental of
+% the XGB-Chiarella line \citep{gao_2022_xgb}. Two interchangeable generators
+% are used, with distinct roles.
 
-\paragraph{Primary: the observed efficient price.}
-For the headline experiments the fundamental is extracted from the real ES
-one-minute mid by a local-level state-space model,
-\begin{equation}
-\label{eq:kalman}
-\ln V_{t+1} = \ln V_t + \mu + \sigma_v \varepsilon_t,
-\qquad
-\ln p^{\mathrm{obs}}_t = \ln V_t + \eta_t,
-\qquad
-\eta_t \sim \mathcal{N}(0, \sigma_\eta^2),
-\end{equation}
-estimated per session by Kalman maximum likelihood and smoothed by the RTS
-recursion, in the spirit of \citet{gao_2022_xgb} and of
-\citet{majewski_2018}, who treat the fundamental as a latent state filtered
-from price. One property of this construction is reported plainly: at the
-one-minute frequency the ES \emph{mid} contains almost no i.i.d.\
-microstructure noise (the noise that model \eqref{eq:kalman} is built to
-remove lives in trade prices, not in quote midpoints), so the estimated
-$\sigma_\eta$ is of order $10^{-5}$ and the smoother is near-identity. The
-fundamental is therefore, in effect, the observed efficient mid --- the
-Kalman step \emph{verifies} that mid-price noise is negligible rather than
-delivering material smoothing --- and the simulated market inherits the real
-return tails through $V_t$, which the agent layer must transmit and reshape
-rather than manufacture from nothing. Two features of the construction
-matter for the clearing tier. First, the per-session series are concatenated
-at their true levels, so \emph{overnight gaps are retained}: the COVID
-episode carries its actual peak-to-trough drawdown of roughly $-33\%$, most
-of which occurred between sessions. The simulator opens each session by
-repricing the entire book at the gapped fundamental, a clean between-session
-jump that stresses the cleared positions without contaminating intraday
-returns. Second, a per-minute local volatility
-$\sigma_t = \sqrt{\mathrm{EWMA}[r^2_t]}$ accompanies the path and drives the
-fundamental traders' belief width in \eqref{eq:ft-reservation}.
+% \paragraph{Primary: the observed efficient price.}
+% For the headline experiments the fundamental is extracted from the real ES
+% one-minute mid by a local-level state-space model,
+% \begin{equation}
+% \label{eq:kalman}
+% \ln V_{t+1} = \ln V_t + \mu + \sigma_v \varepsilon_t,
+% \qquad
+% \ln p^{\mathrm{obs}}_t = \ln V_t + \eta_t,
+% \qquad
+% \eta_t \sim \mathcal{N}(0, \sigma_\eta^2),
+% \end{equation}
+% estimated per session by Kalman maximum likelihood and smoothed by the RTS
+% recursion, in the spirit of \citet{gao_2022_xgb} and of
+% \citet{majewski_2018}, who treat the fundamental as a latent state filtered
+% from price. One property of this construction is reported plainly: at the
+% one-minute frequency the ES \emph{mid} contains almost no i.i.d.\
+% microstructure noise (the noise that model \eqref{eq:kalman} is built to
+% remove lives in trade prices, not in quote midpoints), so the estimated
+% $\sigma_\eta$ is of order $10^{-5}$ and the smoother is near-identity. The
+% fundamental is therefore, in effect, the observed efficient mid --- the
+% Kalman step \emph{verifies} that mid-price noise is negligible rather than
+% delivering material smoothing --- and the simulated market inherits the real
+% return tails through $V_t$, which the agent layer must transmit and reshape
+% rather than manufacture from nothing. Two features of the construction
+% matter for the clearing tier. First, the per-session series are concatenated
+% at their true levels, so \emph{overnight gaps are retained}: the COVID
+% episode carries its actual peak-to-trough drawdown of roughly $-33\%$, most
+% of which occurred between sessions. The simulator opens each session by
+% repricing the entire book at the gapped fundamental, a clean between-session
+% jump that stresses the cleared positions without contaminating intraday
+% returns. Second, a per-minute local volatility
+% $\sigma_t = \sqrt{\mathrm{EWMA}[r^2_t]}$ accompanies the path and drives the
+% fundamental traders' belief width in \eqref{eq:ft-reservation}.
 
-\paragraph{Scenario generator: a stochastic-volatility jump diffusion.}
-For Monte-Carlo experiments that require many independent stress episodes, a
-synthetic alternative generates $V_t$ as a geometric diffusion whose
-volatility mean-reverts as an Ornstein--Uhlenbeck process
-\citep{stein_stein_1991,heston_1993}, overlaid with compound-Poisson jumps
-\citep{merton_1976} and with empirical overnight gaps:
-\begin{align}
-\sigma_{t+1} &= \theta + e^{-\alpha}(\sigma_t - \theta) + s\,\varepsilon^\sigma_t,
-\label{eq:svmjd-vol}\\
-\ln V_{t+1} - \ln V_t &=
-\begin{cases}
-\mu + \sigma_t \varepsilon_t + J_t, & J_t \sim \mathcal{N}(0,\delta^2)
-\text{ w.p. } \lambda/390, & \text{(intraday steps)}\\[2pt]
-G_t \sim \widehat{F}_{\mathrm{on}}, & & \text{(session boundaries)},
-\end{cases}
-\label{eq:svmjd-ret}
-\end{align}
-where $\widehat{F}_{\mathrm{on}}$ is the empirical distribution of the
-regime's observed overnight returns, resampled nonparametrically. Every
-parameter of \eqref{eq:svmjd-vol}--\eqref{eq:svmjd-ret} is measured from the
-ES data with standard realized-measures estimators rather than assumed: the
-diffusion variance from jump-robust daily bipower variation
-\citep{bns_2004}, the jump intensity from threshold exceedance counts
-\citep{mancini_2009} --- approximately $1.9$ per day in the calm regime and
-$1.0$ per day under stress, superseding the FTSE-based intensity of the ODD,
-a flagged deviation --- and the jump size from the realized-variance minus
-bipower-variation jump component, whose share of intraday variance
-($6.8\%$ calm, $3.9\%$ stressed) sits on the $5$--$7\%$ benchmark
-established for the S\&P~500 \citep{huang_tauchen_2005}. The
-Ornstein--Uhlenbeck parameters are fitted to a jump-robust intraday
-volatility series with noise-robust autocovariance moments, and the
-long-run level $\theta$ is re-anchored so the stochastic-volatility layer
-redistributes, rather than inflates, the measured variance. The overnight
-component is included because gaps carry roughly $40\%$ of ES close-to-close
-variance in both regimes and because the COVID decline itself was
-concentrated overnight while intraday returns netted positive --- the
-overnight/intraday asymmetry documented by \citet{lou_polk_skouras_2019}.
-Stressed episodes default to the empirical window length of $29$ sessions,
-so that a ``stressed scenario'' means an episode of COVID-like length and
-severity rather than an indefinitely compounded crash.
+% \paragraph{Scenario generator: a stochastic-volatility jump diffusion.}
+% For Monte-Carlo experiments that require many independent stress episodes, a
+% synthetic alternative generates $V_t$ as a geometric diffusion whose
+% volatility mean-reverts as an Ornstein--Uhlenbeck process
+% \citep{stein_stein_1991,heston_1993}, overlaid with compound-Poisson jumps
+% \citep{merton_1976} and with empirical overnight gaps:
+% \begin{align}
+% \sigma_{t+1} &= \theta + e^{-\alpha}(\sigma_t - \theta) + s\,\varepsilon^\sigma_t,
+% \label{eq:svmjd-vol}\\
+% \ln V_{t+1} - \ln V_t &=
+% \begin{cases}
+% \mu + \sigma_t \varepsilon_t + J_t, & J_t \sim \mathcal{N}(0,\delta^2)
+% \text{ w.p. } \lambda/390, & \text{(intraday steps)}\\[2pt]
+% G_t \sim \widehat{F}_{\mathrm{on}}, & & \text{(session boundaries)},
+% \end{cases}
+% \label{eq:svmjd-ret}
+% \end{align}
+% where $\widehat{F}_{\mathrm{on}}$ is the empirical distribution of the
+% regime's observed overnight returns, resampled nonparametrically. Every
+% parameter of \eqref{eq:svmjd-vol}--\eqref{eq:svmjd-ret} is measured from the
+% ES data with standard realized-measures estimators rather than assumed: the
+% diffusion variance from jump-robust daily bipower variation
+% \citep{bns_2004}, the jump intensity from threshold exceedance counts
+% \citep{mancini_2009} --- approximately $1.9$ per day in the calm regime and
+% $1.0$ per day under stress, superseding the FTSE-based intensity of the ODD,
+% a flagged deviation --- and the jump size from the realized-variance minus
+% bipower-variation jump component, whose share of intraday variance
+% ($6.8\%$ calm, $3.9\%$ stressed) sits on the $5$--$7\%$ benchmark
+% established for the S\&P~500 \citep{huang_tauchen_2005}. The
+% Ornstein--Uhlenbeck parameters are fitted to a jump-robust intraday
+% volatility series with noise-robust autocovariance moments, and the
+% long-run level $\theta$ is re-anchored so the stochastic-volatility layer
+% redistributes, rather than inflates, the measured variance. The overnight
+% component is included because gaps carry roughly $40\%$ of ES close-to-close
+% variance in both regimes and because the COVID decline itself was
+% concentrated overnight while intraday returns netted positive --- the
+% overnight/intraday asymmetry documented by \citet{lou_polk_skouras_2019}.
+% Stressed episodes default to the empirical window length of $29$ sessions,
+% so that a ``stressed scenario'' means an episode of COVID-like length and
+% severity rather than an indefinitely compounded crash.
 
-%==============================================================================
-\section{The margin framework}
-\label{sec:model-margin}
+% %==============================================================================
+% \section{The margin framework}
+% \label{sec:model-margin}
 
-The clearing tier connects the market to a single CCP through the star
-topology of \citet{simudyne_odd}: every clearing member holds a bilateral
-link to the CCP, which becomes the counterparty to all cleared positions
-upon novation. Two member types are distinguished, as in the ODD. A
-\emph{banking clearing member} (BCM) trades its own account --- with
-fundamental-trader logic, so the market-layer calibration is unaffected by
-the cast --- and additionally guarantees a book of clients. A
-\emph{non-banking clearing member} (NBCM) is a pure intermediary with no
-proprietary position; its entire balance-sheet capacity is client clearing.
-The thesis extension is the client tier itself: ninety end-clients
-(fundamental, momentum, and zero-intelligence types) clear through the ten
-client-carrying members in skewed books of five to fifteen clients, with the
-non-banking members carrying the largest books. Loss-absorbing capital is
-initialised at regulatory scale --- bank-level capital for BCMs, the
-non-bank futures-commission-merchant range for NBCMs, and entity-type-scaled
-cash for clients --- taken from CFTC member financial data and CCP
-disclosures.
+% The clearing tier connects the market to a single CCP through the star
+% topology of \citet{simudyne_odd}: every clearing member holds a bilateral
+% link to the CCP, which becomes the counterparty to all cleared positions
+% upon novation. Two member types are distinguished, as in the ODD. A
+% \emph{banking clearing member} (BCM) trades its own account --- with
+% fundamental-trader logic, so the market-layer calibration is unaffected by
+% the cast --- and additionally guarantees a book of clients. A
+% \emph{non-banking clearing member} (NBCM) is a pure intermediary with no
+% proprietary position; its entire balance-sheet capacity is client clearing.
+% The thesis extension is the client tier itself: ninety end-clients
+% (fundamental, momentum, and zero-intelligence types) clear through the ten
+% client-carrying members in skewed books of five to fifteen clients, with the
+% non-banking members carrying the largest books. Loss-absorbing capital is
+% initialised at regulatory scale --- bank-level capital for BCMs, the
+% non-bank futures-commission-merchant range for NBCMs, and entity-type-scaled
+% cash for clients --- taken from CFTC member financial data and CCP
+% disclosures.
 
-\paragraph{Variation margin.}
-Every 60 minutes the margin cycle marks each cleared book to the prevailing
-mid and settles the move in cash. Settlement is computed against
-\emph{average filled prices}, the ODD's margin-call profit-and-loss
-convention \citep{simudyne_odd}: writing $N_\tau$ for the end-of-cycle
-position, $m_\tau$ for the mark, and $\{(q_k, p_k)\}$ for the fills executed
-during the cycle,
-\begin{equation}
-\label{eq:vm}
-\mathrm{VM}_\tau \;=\;
-\Bigl[\, N_\tau\,(m_\tau - m_{\tau-1})
-\;+\; \textstyle\sum_k q_k\,(m_{\tau-1} - p_k) \Bigr]\cdot \ell \cdot \chi ,
-\end{equation}
-where $\ell$ is the per-regime contract lot that maps model volume to
-empirical ES volume and $\chi = \$50$ per index point is the CME multiplier.
-The second term in \eqref{eq:vm} settles each trade from its execution
-price, so that the slippage of forced liquidations
-(Section~\ref{sec:model-default}) is borne in cash by the liquidating party
-rather than lost between marks. Cleared participants use futures-style
-accounting throughout: a fill moves only the position, and cash moves only
-through the margin cycle.
+% \paragraph{Variation margin.}
+% Every 60 minutes the margin cycle marks each cleared book to the prevailing
+% mid and settles the move in cash. Settlement is computed against
+% \emph{average filled prices}, the ODD's margin-call profit-and-loss
+% convention \citep{simudyne_odd}: writing $N_\tau$ for the end-of-cycle
+% position, $m_\tau$ for the mark, and $\{(q_k, p_k)\}$ for the fills executed
+% during the cycle,
+% \begin{equation}
+% \label{eq:vm}
+% \mathrm{VM}_\tau \;=\;
+% \Bigl[\, N_\tau\,(m_\tau - m_{\tau-1})
+% \;+\; \textstyle\sum_k q_k\,(m_{\tau-1} - p_k) \Bigr]\cdot \ell \cdot \chi ,
+% \end{equation}
+% where $\ell$ is the per-regime contract lot that maps model volume to
+% empirical ES volume and $\chi = \$50$ per index point is the CME multiplier.
+% The second term in \eqref{eq:vm} settles each trade from its execution
+% price, so that the slippage of forced liquidations
+% (Section~\ref{sec:model-default}) is borne in cash by the liquidating party
+% rather than lost between marks. Cleared participants use futures-style
+% accounting throughout: a fill moves only the position, and cash moves only
+% through the margin cycle.
 
-\paragraph{Initial margin.}
-Initial margin is charged on gross exposure as a value-at-risk scan --- for
-a single linear future, the SPAN scanning charge coincides with parametric
-VaR --- per EMIR's requirements for exchange-traded derivatives
-\citep{emir_rts}:
-\begin{equation}
-\label{eq:im}
-f^{\mathrm{IM}}_\tau \;=\;
-\max\!\Bigl( f_{\mathrm{floor}},\; z_{99}\,\hat\sigma^{\mathrm{day}}_\tau
-\sqrt{h} \Bigr),
-\qquad
-\mathrm{IM}_\tau = f^{\mathrm{IM}}_\tau \cdot
-\bigl(\,|N^{\mathrm{own}}_\tau| + \textstyle\sum_{c}|N^{c}_\tau|\,\bigr)
-\cdot \ell\,\chi\, m_\tau ,
-\end{equation}
-with $z_{99}$ the 99\% normal quantile, $h = 2$ days the margin period of
-risk, and an anti-procyclicality floor $f_{\mathrm{floor}}$ anchored to the
-CME's ES margin scale. The driving volatility $\hat\sigma^{\mathrm{day}}_\tau$
-defines the \emph{margin regime}, the experimental lever for the
-procyclicality hypothesis: in the \emph{reactive} baseline it is an
-exponentially weighted estimate of realised intraday simulation returns
-(half-life two sessions), so margin ratchets upward through a crash exactly
-as CME's ES margin was raised repeatedly through March 2020; a \emph{static}
-variant fixes it at the regime constant; and a \emph{flat} variant removes
-the volatility response altogether, charging a constant fraction --- the
-through-the-cycle comparator contemplated by the anti-procyclicality
-options of EMIR and the post-2020 margin debate
-\citep{murphy_2014,esrb_2020}. A maintenance threshold at $95\%$ of initial
-margin flags margin calls when a cycle's variation margin exceeds the
-remaining buffer \citep{simudyne_odd}.
+% \paragraph{Initial margin.}
+% Initial margin is charged on gross exposure as a value-at-risk scan --- for
+% a single linear future, the SPAN scanning charge coincides with parametric
+% VaR --- per EMIR's requirements for exchange-traded derivatives
+% \citep{emir_rts}:
+% \begin{equation}
+% \label{eq:im}
+% f^{\mathrm{IM}}_\tau \;=\;
+% \max\!\Bigl( f_{\mathrm{floor}},\; z_{99}\,\hat\sigma^{\mathrm{day}}_\tau
+% \sqrt{h} \Bigr),
+% \qquad
+% \mathrm{IM}_\tau = f^{\mathrm{IM}}_\tau \cdot
+% \bigl(\,|N^{\mathrm{own}}_\tau| + \textstyle\sum_{c}|N^{c}_\tau|\,\bigr)
+% \cdot \ell\,\chi\, m_\tau ,
+% \end{equation}
+% with $z_{99}$ the 99\% normal quantile, $h = 2$ days the margin period of
+% risk, and an anti-procyclicality floor $f_{\mathrm{floor}}$ anchored to the
+% CME's ES margin scale. The driving volatility $\hat\sigma^{\mathrm{day}}_\tau$
+% defines the \emph{margin regime}, the experimental lever for the
+% procyclicality hypothesis: in the \emph{reactive} baseline it is an
+% exponentially weighted estimate of realised intraday simulation returns
+% (half-life two sessions), so margin ratchets upward through a crash exactly
+% as CME's ES margin was raised repeatedly through March 2020; a \emph{static}
+% variant fixes it at the regime constant; and a \emph{flat} variant removes
+% the volatility response altogether, charging a constant fraction --- the
+% through-the-cycle comparator contemplated by the anti-procyclicality
+% options of EMIR and the post-2020 margin debate
+% \citep{murphy_2014,esrb_2020}. A maintenance threshold at $95\%$ of initial
+% margin flags margin calls when a cycle's variation margin exceeds the
+% remaining buffer \citep{simudyne_odd}.
 
-\paragraph{Capital adequacy.}
-Each member's capital ratio is cash over initial margin,
-\begin{equation}
-\label{eq:capital}
-\kappa_\tau \;=\; \frac{C_\tau}{\mathrm{IM}_\tau} \;\geq\; 8\%,
-\end{equation}
-the futures-commission-merchant net-capital rule, which sets required
-capital against \emph{risk margin} rather than gross notional
-\citep{cftc_reg117}. The distinction matters operationally: an FCM clears
-many multiples of its capital in client notional, so a notional-based floor
-would bind permanently, whereas \eqref{eq:capital} binds only as distress
-approaches. A banking member's proprietary book is additionally capped by a
-trading-book VaR limit, $|N^{\mathrm{own}}|\,\ell\chi m \leq
-\beta C / (z_{99}\hat\sigma^{\mathrm{day}})$ with $\beta = 5\%$ of capital,
-in the spirit of regulatory trading-book risk limits \citep{basel_frtb};
-without it, the fundamental-trader logic accumulates unbounded prop
-positions in a trend.
+% \paragraph{Capital adequacy.}
+% Each member's capital ratio is cash over initial margin,
+% \begin{equation}
+% \label{eq:capital}
+% \kappa_\tau \;=\; \frac{C_\tau}{\mathrm{IM}_\tau} \;\geq\; 8\%,
+% \end{equation}
+% the futures-commission-merchant net-capital rule, which sets required
+% capital against \emph{risk margin} rather than gross notional
+% \citep{cftc_reg117}. The distinction matters operationally: an FCM clears
+% many multiples of its capital in client notional, so a notional-based floor
+% would bind permanently, whereas \eqref{eq:capital} binds only as distress
+% approaches. A banking member's proprietary book is additionally capped by a
+% trading-book VaR limit, $|N^{\mathrm{own}}|\,\ell\chi m \leq
+% \beta C / (z_{99}\hat\sigma^{\mathrm{day}})$ with $\beta = 5\%$ of capital,
+% in the spirit of regulatory trading-book risk limits \citep{basel_frtb};
+% without it, the fundamental-trader logic accumulates unbounded prop
+% positions in a trend.
 
-\paragraph{Client clearing.}
-Each client carries its own balance sheet. The margin cycle issues every
-client its own variation-margin call, paid from the client's own cash and
-relayed by its member to the CCP; the client's live inventory is novated
-into the member's cleared book each cycle. A client can open positions only
-up to its broker house margin --- a fixed $20\%$ of notional, i.e.\
-five-times leverage, the conservative house multiple above the exchange
-minimum --- and is frozen (barred from new risk) when its cash falls below
-$8\%$ of its gross notional. Cash exhaustion is a client default and hands
-the position to the member (Section~\ref{sec:model-default}). This
-client tier is the thesis's central extension of the reference model;
-its empirical motivation --- clients supply the majority of margin at major
-CCPs and typically depend on a single clearing agent --- is documented by
-\citet{ofr_2026}.
+% \paragraph{Client clearing.}
+% Each client carries its own balance sheet. The margin cycle issues every
+% client its own variation-margin call, paid from the client's own cash and
+% relayed by its member to the CCP; the client's live inventory is novated
+% into the member's cleared book each cycle. A client can open positions only
+% up to its broker house margin --- a fixed $20\%$ of notional, i.e.\
+% five-times leverage, the conservative house multiple above the exchange
+% minimum --- and is frozen (barred from new risk) when its cash falls below
+% $8\%$ of its gross notional. Cash exhaustion is a client default and hands
+% the position to the member (Section~\ref{sec:model-default}). This
+% client tier is the thesis's central extension of the reference model;
+% its empirical motivation --- clients supply the majority of margin at major
+% CCPs and typically depend on a single clearing agent --- is documented by
+% \citet{ofr_2026}.
 
-%==============================================================================
-\section{The default management framework}
-\label{sec:model-default}
+% %==============================================================================
+% \section{The default management framework}
+% \label{sec:model-default}
 
-Default management proceeds in three escalating stages --- client default,
-member distress, member default --- and is closed by the CCP's prefunded
-resources. All liquidations use the same execution schedule: a position of
-size $X$ unwound over horizon $H$ follows the closed-form
-\citet{almgren_chriss_2000} trajectory
-\begin{equation}
-\label{eq:ac}
-\frac{x_j}{X} \;=\; \frac{\sinh\bigl(\kappa (H - j)\bigr)}{\sinh(\kappa H)},
-\qquad j = 0,\dots,H,
-\end{equation}
-with urgency $\kappa H = 2$ and $H = 30$ minutes, executed as market orders
-on the simulated book --- so liquidation impact is endogenous: the fire-sale
-walks the very book on which surviving members are marked, which is the
-price-mediated contagion channel of the model
-\citep{simudyne_odd,vytelingum_2025}.
+% Default management proceeds in three escalating stages --- client default,
+% member distress, member default --- and is closed by the CCP's prefunded
+% resources. All liquidations use the same execution schedule: a position of
+% size $X$ unwound over horizon $H$ follows the closed-form
+% \citet{almgren_chriss_2000} trajectory
+% \begin{equation}
+% \label{eq:ac}
+% \frac{x_j}{X} \;=\; \frac{\sinh\bigl(\kappa (H - j)\bigr)}{\sinh(\kappa H)},
+% \qquad j = 0,\dots,H,
+% \end{equation}
+% with urgency $\kappa H = 2$ and $H = 30$ minutes, executed as market orders
+% on the simulated book --- so liquidation impact is endogenous: the fire-sale
+% walks the very book on which surviving members are marked, which is the
+% price-mediated contagion channel of the model
+% \citep{simudyne_odd,vytelingum_2025}.
 
-\paragraph{Client default.}
-A client whose cash is exhausted by variation margin defaults. Its member
-covers the uncollected margin call, assumes the client's position onto its
-own book, and liquidates it by \eqref{eq:ac} --- a banking member through
-its own orders, a non-banking member through orders routed by the CCP on its
-behalf. Because variation margin settles against fill prices
-\eqref{eq:vm}, the close-out loss is realised as the fire-sale walks the
-price: the member's loss is the deficit the liquidation actually produces,
-not a stylised haircut. This client$\to$member loss assumption is the first
-link of the cascade under study.
+% \paragraph{Client default.}
+% A client whose cash is exhausted by variation margin defaults. Its member
+% covers the uncollected margin call, assumes the client's position onto its
+% own book, and liquidates it by \eqref{eq:ac} --- a banking member through
+% its own orders, a non-banking member through orders routed by the CCP on its
+% behalf. Because variation margin settles against fill prices
+% \eqref{eq:vm}, the close-out loss is realised as the fire-sale walks the
+% price: the member's loss is the deficit the liquidation actually produces,
+% not a stylised haircut. This client$\to$member loss assumption is the first
+% link of the cascade under study.
 
-\paragraph{Member distress.}
-A member breaching the capital floor \eqref{eq:capital} while still solvent
-acts before defaulting, asymmetrically by type as in the ODD
-\citep{simudyne_odd}: a banking member \emph{deleverages}, selling its
-proprietary book down by \eqref{eq:ac} until the floor is restored; a
-non-banking member, having no own book to sell, \emph{stops out} ---
-suspending new client risk, which freezes its clients --- for as long as the
-breach persists. The stop-out is state-based: it lifts if the ratio
-recovers. These are the liquidity-withdrawal behaviours that couple margin
-pressure back into the market layer.
+% \paragraph{Member distress.}
+% A member breaching the capital floor \eqref{eq:capital} while still solvent
+% acts before defaulting, asymmetrically by type as in the ODD
+% \citep{simudyne_odd}: a banking member \emph{deleverages}, selling its
+% proprietary book down by \eqref{eq:ac} until the floor is restored; a
+% non-banking member, having no own book to sell, \emph{stops out} ---
+% suspending new client risk, which freezes its clients --- for as long as the
+% breach persists. The stop-out is state-based: it lifts if the ratio
+% recovers. These are the liquidity-withdrawal behaviours that couple margin
+% pressure back into the market layer.
 
-\paragraph{Member default and the waterfall.}
-A member whose cash is exhausted defaults. The CCP absorbs the member's
-realised cash deficit --- the shortfall it owes but cannot pay --- through
-the five-level waterfall of the reference model \citep{simudyne_odd}, in
-EMIR's defaulter-pays ordering \citep{emir_rts}:
-\begin{equation}
-\label{eq:waterfall}
-\text{L1 own DF contribution}
-\;\to\; \text{L2 CCP skin-in-the-game}
-\;\to\; \text{L3 pooled DF}
-\;\to\; \text{L4 survivors' cash}
-\;\to\; \text{L5 CCP capital}.
-\end{equation}
-The defaulted member is then removed from the system (ODD step sequence).
-Its surviving clients are \emph{ported}: each is reassigned to a surviving
-client-carrying member with spare risk capacity, accepted only if the
-receiver remains above its capital floor with the transferred book ---
-porting is the regulatory first option on a member default
-\citep{emir_rts}, but it is capacity-checked rather than guaranteed, since
-in practice the modal client has no standing backup agent
-\citep{ofr_2026}; clients that cannot be placed are closed out and
-deactivated. The member's own book, together with any unported client
-positions, passes to the CCP, which disposes of it by \eqref{eq:ac} on the
-open market. The CCP carries this book in a disposal account marked through
-the margin cycle: disposal-period losses re-enter the waterfall
-\eqref{eq:waterfall} of the originating default, so the mutualised loss is
-the close-out loss actually realised, symmetric with the client treatment.
-The open-market disposal is a flagged deviation from the ODD, whose default
-positions are auctioned to the surviving member with the largest opposing
-position; the deviation is deliberate, as the endogenous price impact of
-disposal is precisely the contagion mechanism the thesis measures.
+% \paragraph{Member default and the waterfall.}
+% A member whose cash is exhausted defaults. The CCP absorbs the member's
+% realised cash deficit --- the shortfall it owes but cannot pay --- through
+% the five-level waterfall of the reference model \citep{simudyne_odd}, in
+% EMIR's defaulter-pays ordering \citep{emir_rts}:
+% \begin{equation}
+% \label{eq:waterfall}
+% \text{L1 own DF contribution}
+% \;\to\; \text{L2 CCP skin-in-the-game}
+% \;\to\; \text{L3 pooled DF}
+% \;\to\; \text{L4 survivors' cash}
+% \;\to\; \text{L5 CCP capital}.
+% \end{equation}
+% The defaulted member is then removed from the system (ODD step sequence).
+% Its surviving clients are \emph{ported}: each is reassigned to a surviving
+% client-carrying member with spare risk capacity, accepted only if the
+% receiver remains above its capital floor with the transferred book ---
+% porting is the regulatory first option on a member default
+% \citep{emir_rts}, but it is capacity-checked rather than guaranteed, since
+% in practice the modal client has no standing backup agent
+% \citep{ofr_2026}; clients that cannot be placed are closed out and
+% deactivated. The member's own book, together with any unported client
+% positions, passes to the CCP, which disposes of it by \eqref{eq:ac} on the
+% open market. The CCP carries this book in a disposal account marked through
+% the margin cycle: disposal-period losses re-enter the waterfall
+% \eqref{eq:waterfall} of the originating default, so the mutualised loss is
+% the close-out loss actually realised, symmetric with the client treatment.
+% The open-market disposal is a flagged deviation from the ODD, whose default
+% positions are auctioned to the surviving member with the largest opposing
+% position; the deviation is deliberate, as the endogenous price impact of
+% disposal is precisely the contagion mechanism the thesis measures.
 
-\paragraph{The default fund.}
-The mutualised layers of \eqref{eq:waterfall} are prefunded. The fund is
-sized daily to the \emph{cover-two} standard --- sufficient for the
-simultaneous default of the two largest members
-\citep{emir_rts} --- by the stress-loss-over-initial-margin method of
-Euronext Clearing \citep{euronext_a9}:
-\begin{equation}
-\label{eq:df}
-\mathrm{DF}_\tau \;=\; (1+b) \sum_{j \in \text{top-2}}
-\max\Bigl( 0,\; \bigl(s_\tau - f^{\mathrm{IM}}_\tau\bigr)\,
-|N_{j,\tau}|\,\ell\,\chi\,m_\tau \Bigr),
-\qquad
-s_\tau = \max\bigl(15\%,\; z_{s}\,\hat\sigma^{\mathrm{day}}_\tau\sqrt{h}\bigr),
-\end{equation}
-the loss each member would suffer beyond posted margin under an
-extreme-but-plausible move $s_\tau$, with buffer $b = 10\%$. The CCP
-prefunds a skin-in-the-game share ahead of the pooled fund, consumed at L2
-before any survivor resources \citep{simudyne_odd}; the EMIR skin-in-the-game
-rule is expressed against CCP regulatory capital rather than fund size, so
-the model's fund-share convention is a stylised assumption and is disclosed
-as such. Member contributions are paid \emph{in cash} into the fund, pro
-rata to exposure, and every post-draw daily recomputation is therefore a
-replenishment cash call on survivors --- the margin-liquidity channel that
-made the March 2020 episode a funding event as much as a solvency one
-\citep{esrb_2020}. Reverse-stress experiments scale the fundamental path
-until \eqref{eq:df} is breached, the scenario-design logic of
-\citet{euronext_a9}.
+% \paragraph{The default fund.}
+% The mutualised layers of \eqref{eq:waterfall} are prefunded. The fund is
+% sized daily to the \emph{cover-two} standard --- sufficient for the
+% simultaneous default of the two largest members
+% \citep{emir_rts} --- by the stress-loss-over-initial-margin method of
+% Euronext Clearing \citep{euronext_a9}:
+% \begin{equation}
+% \label{eq:df}
+% \mathrm{DF}_\tau \;=\; (1+b) \sum_{j \in \text{top-2}}
+% \max\Bigl( 0,\; \bigl(s_\tau - f^{\mathrm{IM}}_\tau\bigr)\,
+% |N_{j,\tau}|\,\ell\,\chi\,m_\tau \Bigr),
+% \qquad
+% s_\tau = \max\bigl(15\%,\; z_{s}\,\hat\sigma^{\mathrm{day}}_\tau\sqrt{h}\bigr),
+% \end{equation}
+% the loss each member would suffer beyond posted margin under an
+% extreme-but-plausible move $s_\tau$, with buffer $b = 10\%$. The CCP
+% prefunds a skin-in-the-game share ahead of the pooled fund, consumed at L2
+% before any survivor resources \citep{simudyne_odd}; the EMIR skin-in-the-game
+% rule is expressed against CCP regulatory capital rather than fund size, so
+% the model's fund-share convention is a stylised assumption and is disclosed
+% as such. Member contributions are paid \emph{in cash} into the fund, pro
+% rata to exposure, and every post-draw daily recomputation is therefore a
+% replenishment cash call on survivors --- the margin-liquidity channel that
+% made the March 2020 episode a funding event as much as a solvency one
+% \citep{esrb_2020}. Reverse-stress experiments scale the fundamental path
+% until \eqref{eq:df} is breached, the scenario-design logic of
+% \citet{euronext_a9}.
 
-Two structural counterfactuals complete the design and operationalise the
-research questions: a \emph{direct-clearing} configuration, in which the
-client tier is removed and all end-users face the CCP directly with
-otherwise identical trading mechanics --- isolating the loss-absorption
-structure of tiering in the spirit of the netting and tiering trade-offs of
-\citet{duffie_zhu_2011} and \citet{galbiati_soramaki_2013} --- and the
-margin-regime switch of Section~\ref{sec:model-margin}. Both are evaluated
-as paired experiments on identical fundamental paths and random seeds, so
-that differences in outcomes are attributable to the structural change
-alone.
+% Two structural counterfactuals complete the design and operationalise the
+% research questions: a \emph{direct-clearing} configuration, in which the
+% client tier is removed and all end-users face the CCP directly with
+% otherwise identical trading mechanics --- isolating the loss-absorption
+% structure of tiering in the spirit of the netting and tiering trade-offs of
+% \citet{duffie_zhu_2011} and \citet{galbiati_soramaki_2013} --- and the
+% margin-regime switch of Section~\ref{sec:model-margin}. Both are evaluated
+% as paired experiments on identical fundamental paths and random seeds, so
+% that differences in outcomes are attributable to the structural change
+% alone.
