@@ -1,30 +1,13 @@
-% % My work
-
-% Data- 
-% \cite{esrb_2020_covid} covid IM increased 1/3rd. \citep{bcbs_cpmi_iosco_2022} march 2020 was most significant test of market resilience since GFC, more numbers for crisis.
-
-% Leverage Ratio
-% \cite{haynes_mcphail_zhu_2019} Basel III binding constraint for derivatives
-% \cite{acosta_smith_2018} " UK dealers reduce their client clearing business following the introduction of the
-% requirement, particularly dealers with lower capital positions and for longer‑term derivatives; they are also
-% more likely to end client relationships. Capital regulation might indirectly limit access to clearing services."
-
-
-
-
-
-
 % %==============================================================================
 % %  CHAPTER 4 — DATA, CALIBRATION AND VALIDATION (methodology)
 % %------------------------------------------------------------------------------
 % %  Style: matches introduction.tex / model.tex (\citep/\citet authoryear; keys
 % %  resolve against introduction_refs.bib + model_refs.bib). Written while the
-% %  final calibration runs are in flight: this chapter fixes the METHODOLOGY;
-% %  calibrated values, fit tables, loss surfaces, and the ablation/robustness
+% %  final calibration runs are now LOCKED (D65, output/relock/): this chapter fixes the
+% %  METHODOLOGY; calibrated values, fit tables, loss surfaces, and the ablation/robustness
 % %  numbers are reported in the results chapter. [NUMBERS: ...] marks the spots
-% %  to fill from output/ once the runs are locked.
+% %  to fill from output/relock/ (and output/relock_gbm/ for the SV-MJD robustness).
 % %==============================================================================
-
 
 % Agent-based models do not admit a likelihood function: the mapping from
 % parameters to prices runs through millions of discrete order-book events,
@@ -86,9 +69,11 @@
 
 % \emph{Pinned by design.} Structural choices follow their references rather
 % than the optimiser: the momentum horizon $\lambda$ is fixed externally as in
-% \citet{majewski_2018}; the zero-intelligence market-order rate stays at the
-% \citet{cont_stoikov_talreja_2008} baseline (the ablation found calibrating
-% it changes the fit negligibly); fundamental and momentum traders act every
+% \citet{majewski_2018}, who pin theirs to the six-month horizon implied by
+% CTA-index correlations; the zero-intelligence market-order rate stays at the
+% reference model's baseline value \citep{simudyne_odd}, structured after
+% \citet{cont_stoikov_talreja_2008} (the ablation found calibrating it changes
+% the fit negligibly); fundamental and momentum traders act every
 % step, per the reference step sequence \citep{simudyne_odd}; and all
 % clearing-tier constants are regulatory pins
 % (Chapter~3.\ref{sec:model-margin}).
@@ -135,9 +120,11 @@
 %         volatility scale \citep{gao_2022_hfabm}.
 %   \item \textbf{ACF1} --- the return autocorrelation at lags
 %         $\{1, 5, 10, 20\}$ minutes, each smoothed over three adjacent lags
-%         as in \citet{gao_2022_xgb}; its target is the empirical near-zero
-%         profile, so this group penalises any mechanical predictability the
-%         agents might introduce (e.g.\ bid--ask bounce or trend-chasing).
+%         as in \citet{gao_2022_xgb} (whose lag centres $\{1,10,20\}$ are
+%         extended here with a five-minute centre); its target is the
+%         empirical near-zero profile, so this group penalises any mechanical
+%         predictability the agents might introduce (e.g.\ bid--ask bounce or
+%         trend-chasing).
 %   \item \textbf{ACF2} --- the \emph{absolute}-return autocorrelation at the
 %         same lags: the volatility-clustering target. Absolute returns are
 %         used instead of squared returns deliberately: $r^2$ is dominated by
@@ -224,8 +211,8 @@
 % the \emph{entire loss surface}, so identification --- which parameters the
 % data actually pins down, and which directions are flat --- can be read
 % directly off the output rather than asserted.
-% % [NUMBERS: grid resolution per regime (7^3 calm / 5^4 stressed), n_days,
-% %  n_runs, surfaces in output/calibration_grid_{regime}.csv]
+% % [NUMBERS: grid resolution per regime (D65 re-lock: calm 5^4=625, stressed
+% %  4^5=1024), n_days=20, n_runs=3, surfaces in output/relock/grid_surface_{regime}.csv]
 
 % \subsection{Surrogate-assisted simulated moment matching}
 
@@ -286,8 +273,8 @@
 % as the central evidence that the reported optimum is a property of the
 % model and data rather than of the optimiser.
 % % [NUMBERS: side-by-side grid vs surrogate optima per regime, from
-% %  output/baseline_grid/ and output/baseline_hires/ (Kalman) and
-% %  output/baseline_gbm/ (scenario generator)]
+% %  output/relock/ (Kalman, D65 lock) and
+% %  output/relock_gbm/ (SV-MJD scenario generator, D65 re-lock)]
 
 % The same pipeline is run twice end-to-end: once for the primary
 % (data-derived) fundamental and once for the stochastic-volatility
