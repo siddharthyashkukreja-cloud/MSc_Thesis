@@ -8,9 +8,9 @@
 % %  source for every mechanism (Simudyne ODD first; deviations flagged inline).
 % %==============================================================================
 
-This section describes the Client Clearing Agent-Based model and its architecture. The model is built in two tiers - the first is a market simulation where heterogenous agents trade an asset on a discrete Limit Order Book operating at a one minute frequency, and the second is a clearing layer in which a CCP novates these trades, collects margin calls and handles defaults. The two tiers are connected, price changes and orders in the market layer drive margin calls, trading freezes due to capital ratio requirements, and forced liquidations that impact price and liquidity, creating a loop that spreads contagion. In the spirit of \cite{chiarella_iori_perello_2009} and \cite{majewski_2018}, the market simulation is populated by fundamental traders, momentum traders and noise traders and is calibrated to reproduce stylised facts of returns. Other trader types were trialled to try and make the simulation more realistic. This included splitting the momentum trader into a short-term and long-term momentum trader, adding a Market Maker - both uniform quoting and inventory skewed quoting -, and a trader that trader more actively in volatile market situations. These traders, however, did not lead to an improvement in the model and hence added unjustified complexity. 
+This section describes the Client Clearing Agent-Based model and its architecture. The model is built in two tiers - the first is a market simulation where heterogeneous agents trade an asset on a discrete Limit Order Book operating at a one minute frequency, and the second is a clearing layer in which a CCP novates these trades, collects margin calls and handles defaults. The two tiers are connected: price changes and orders in the market layer drive margin calls, trading freezes due to capital ratio requirements, and forced liquidations that impact price and liquidity, creating a loop that spreads contagion. In the spirit of \cite{chiarella_iori_perello_2009} and \cite{majewski_2018}, the market simulation is populated by fundamental traders, momentum traders and noise traders and is calibrated to reproduce stylised facts of returns. Other trader types were trialled to try and make the simulation more realistic. This included splitting the momentum trader into a short-term and long-term momentum trader, adding a Market Maker - both uniform quoting and inventory skewed quoting - and a trader that trades more actively in volatile market situations. These traders, however, did not lead to an improvement in the model and hence added unjustified complexity. 
 
-The data used for calibration is E-mini S\&P 500 (ES) data, but can be calibrated to any other asset. The model includes 2 regimes - a calm regime and a stressed regime, with parameters calibrated separately for each. Parameter values and a descriptions can be found in the \ref{ch:appendix}. In this way, a stressful market environment is produced endogenously. The traders are either Bank Clearing Members trading on their house account, or clients of other bank and non-bank clearing members. The clearing layer takes inspiration from  the CCP risk model of \cite{deloitte_ccp} and extends it with the client layer, with clearing layer parameters based on regulation and public CCP disclosures. The model is then used to study the effects of client clearing on systemic risk and the procyclicality of margin calls. 
+The data used for calibration is E-mini S\&P 500 (ES) data, but can be calibrated to any other asset. The model includes 2 regimes - a calm regime and a stressed regime, with parameters calibrated separately for each. Parameter values and descriptions can be found in Appendix~\ref{ch:appendix}. In this way, a stressful market environment is produced endogenously. The traders are either Bank Clearing Members trading on their house account, or clients of other Bank and Non-Bank Clearing Members. The clearing layer takes inspiration from the CCP risk model of \cite{deloitte_ccp} and extends it with the client layer, with clearing layer parameters based on regulation and public CCP disclosures. The model is then used to study the effects of client clearing on systemic risk and the procyclicality of margin calls. 
 
 
 %==============================================================================
@@ -31,19 +31,19 @@ where $b_t$ and $a_t$ are the best bid and best ask at the end of step $t$. The 
 \subsection{Trading Agents}
 \label{sec:agents}
 
-The book is populated by 100 trading agents of three types - 40 fundamental traders (FT), 20 momentum traders (MT), and 40 noise traders/zero-intelligence traders(ZI). The ZIs serve as a constant source of liquidity to the book, the FTs keep asset price anchored to an exogenous fundamental signal, and the MTs amplify price movements and trade on trend. Ten of the FTs also serve as Bank-Clearing Members (BCMs), and the remaining 30 and the ZI and MT traders serve as clients of other BCMs and Non-Bank Clearing Members (NBCMs). FTs and MTs place limit orders at each step, with new orders replacing old orders. ZIs place both limit and market orders, and order cancellations, leading to the presence of resting orders on the book. FTs place limit orders at a heterogenous fundamental signal they observe, and MTs and ZIs place limit orders at a depth of $k$ steps from the previous mid, drawn from a geometric distribution $k \sim \mathrm{Geometric}(p_d)$ -, where $p_d$ can be fit to L2 order book or calibrated alongside other parameters. A log-normal depth was trialled, but stylised facts were more easily reproduced with a geometric depth of limit order placement.  Order sizes are drawn uniformly from $[1, q_{\max}]$ for each trader.
+The book is populated by 100 trading agents of three types - 40 fundamental traders (FT), 20 momentum traders (MT), and 40 noise traders/zero-intelligence traders (ZI). The ZIs serve as a constant source of liquidity to the book, the FTs keep asset price anchored to an exogenous fundamental signal, and the MTs amplify price movements and trade on trend. Ten of the FTs also serve as Bank Clearing Members (BCMs), and the remaining 30 and the ZI and MT traders serve as clients of other BCMs and Non-Bank Clearing Members (NBCMs). FTs and MTs place limit orders at each step, with new orders replacing old orders. ZIs place both limit and market orders, and order cancellations, leading to the presence of resting orders on the book. FTs place limit orders at a heterogeneous fundamental signal they observe, and MTs and ZIs place limit orders at a depth of $k$ steps from the previous mid, drawn from a geometric distribution $k \sim \mathrm{Geometric}(p_d)$, where $p_d$ can be fit to L2 order book or calibrated alongside other parameters. A log-normal depth was trialled, but stylised facts were more easily reproduced with a geometric depth of limit order placement.  Order sizes are drawn uniformly from $[1, q_{\max}]$ for each trader.
 
 \subsubsection{Fundamental Trader}
 
-Fundamental traders trade based on the fundamental value of the stock. The fundamental value $V_t$ is fed as an exogenous signal. To introduce heterogeneity, each FT carries a fixed belief offset $z_i \sim \mathcal{N}(0,1)$ drawn at initialisation, so each FT carries it's own private valuation. At each step, fundamental traders place a limit order at a reservation $R^{i}_t$ from the fundamental value (FV) signal:- 
+Fundamental traders trade based on the fundamental value of the stock. The fundamental value $V_t$ is fed as an exogenous signal. To introduce heterogeneity, each FT carries a fixed belief offset $z_i \sim \mathcal{N}(0,1)$ drawn at initialisation, so each FT carries its own private valuation. At each step, fundamental traders place a limit order at a reservation $R^{i}_t$ from the fundamental value (FV) signal:- 
 
 \begin{equation}
   R^{i}_t = V_t\,\big(1 + z_i\,c_f\,\sigma_t\big),
 \end{equation}
-where $\sigma_t$ is the local volatility of the fundamental (Section~\ref{sec:fundamental}) - an EWMA of its squared returns -, and
+where $\sigma_t$ is the local volatility of the fundamental (Section~\ref{sec:fundamental}) - an EWMA of its squared returns - and
 $c_f$ is a calibrated scale that sets the width of the belief
 distribution.
-The trader buys when its reservation sits above the mid-price and sells when it sits below, placing a limit order at its unique $R^{i}_t$. The heterogenous $z_i$ being fixed for a trader at onset leads to high $z_i$ traders holding a more optimistic view that causes their positions to accumulate and build, and vice-versa for the low $z_i$ traders. This leads to concentrated inventories, allowing for meaningful exposures to margin calls and market stress. The belief width scale $c_f$ is calibrated as a parameter and controls how far reservations travel from FV and acts as a meaningful lever in reproducing stylised facts, and allows for a more accurate model for the calm and stressed period split. 
+The trader buys when its reservation sits above the mid-price and sells when it sits below, placing a limit order at its unique $R^{i}_t$. The heterogeneous $z_i$ being fixed for a trader at onset leads to high $z_i$ traders holding a more optimistic view that causes their positions to accumulate and build, and vice-versa for the low $z_i$ traders. This leads to concentrated inventories, allowing for meaningful exposures to margin calls and market stress. The belief width scale $c_f$ is calibrated as a parameter and controls how far reservations travel from FV and acts as a meaningful lever in reproducing stylised facts, and allows for a more accurate model for the calm and stressed period split. 
 
 
 \subsubsection{Momentum Trader}
@@ -53,14 +53,14 @@ average of mid-price log-returns,
 \begin{equation}
   M_t = (1-\lambda)\,M_{t-1} + \lambda\,\big(\log P_{t-1} - \log P_{t-2}\big),
 \end{equation}
-buying when  the momentum signal $M_t > 0$ and selling when $M_t < 0$ - placing a limit order on that side at a geometric depth  $k \sim \mathrm{Geometric}(p_d)$  from the last mid. Momentum traders amplify trends and contribute to short-horizon volatility clustering. The signal decay $\lambda = 0.05$ is shared across momentum traders and held fixed rather
+buying when the momentum signal $M_t > 0$ and selling when $M_t < 0$ - placing a limit order on that side at a geometric depth $k \sim \mathrm{Geometric}(p_d)$ from the last mid. Momentum traders amplify trends and contribute to short-horizon volatility clustering. The signal decay $\lambda = 0.05$ is shared across momentum traders and held fixed rather
 than calibrated, following \cite{majewski_2018}.
 It corresponds to a half-life of about 13.5 minutes, and allowing it to be calibrated did not improve the model. 
 
 \subsubsection{Noise Trader}
 
 Noise, or zero-intelligence (ZI), traders place orders at random and provide the book's
-background liquidity \citep{farmer_2005}. Following \cite{cont_stoikov_talreja_2008}, ZI order flow is modelled as unique rates for limit order, market order and order cancellation placements, following a poisson process, corresponding to a per-step probability. 
+background liquidity \citep{farmer_2005}. Following \cite{cont_stoikov_talreja_2008}, ZI order flow is modelled as unique rates for limit order, market order and order cancellation placements, following a Poisson process, corresponding to a per-step probability. 
  A ZI trader therefore submits a limit order with probability $\alpha_{zi}$ on a random side at a geometric
 depth $k \sim \mathrm{Geometric}(p_d)$, submits a market order with probability $\mu_{zi}$ on a
 random side, and cancels each resting order with probability $\delta_{zi}$. Unlike FT and MT, ZI orders stay on the book until they are filled or cancelled. The three rates $\alpha_{zi}$,
@@ -69,7 +69,7 @@ $\mu_{zi}$, and $\delta_{zi}$ are calibrated as part of the surrogate modelling 
 \subsection{The Fundamental Value Process}
 \label{sec:fundamental}
 
-The fundamental value $V_t$ is exogenously created and fed as a signal to FV traders. By default, the fundamental value is taken as the empirical mid price series for E-mini (ES) futures. A synthetic GBM with jumps and a mean reverting volatility process is kept as an alternative, and both lead to a realistic reproduction of stylised facts.
+The fundamental value $V_t$ is exogenously created and fed as a signal to fundamental traders (FTs). By default, the fundamental value is taken as the empirical mid price series for E-mini (ES) futures. A synthetic GBM with jumps and a mean reverting volatility process is kept as an alternative, and both lead to a realistic reproduction of stylised facts.
 
 
 \paragraph{Data-driven signal.}
@@ -90,7 +90,7 @@ $\sigma_J$ is small, about $0.1\%$ per jump in calm markets and $0.7\%$ under st
 mean-reverting volatility is the feature that generates realistic long-horizon volatility
 clustering in the model.
 \paragraph{Overnight gaps.}
-Both fundamentals retain overnight gaps, which holds relevance as the largest moves in the stressed sample occurred overnight, The data-driven path carries the realised gaps
+Both fundamentals retain overnight gaps, which holds relevance as the largest moves in the stressed sample occurred overnight. The data-driven path carries the realised gaps
 in sequence, while the synthetic path draws each gap from the regime's observed overnight returns.
 
 \paragraph{Local volatility.}
