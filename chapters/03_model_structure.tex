@@ -10,7 +10,7 @@
 
 This section describes the Client Clearing Agent-Based model and its architecture. The model is built in two tiers - the first is a market simulation where heterogeneous agents trade an asset on a discrete Limit Order Book operating at a one minute frequency, and the second is a clearing layer in which a CCP novates these trades, collects margin calls and handles defaults. The two tiers are connected: price changes and orders in the market layer drive margin calls, trading freezes due to capital ratio requirements, and forced liquidations that impact price and liquidity, creating a loop that spreads contagion. In the spirit of \cite{chiarella_iori_perello_2009} and \cite{majewski_2018}, the market simulation is populated by fundamental traders, momentum traders and noise traders and is calibrated to reproduce stylised facts of returns. Other trader types were trialled to try and make the simulation more realistic. This included splitting the momentum trader into a short-term and long-term momentum trader, adding a Market Maker - both uniform quoting and inventory skewed quoting - and a trader that trades more actively in volatile market situations. These traders, however, did not lead to an improvement in the model and hence added unjustified complexity. 
 
-The data used for calibration is E-mini S\&P 500 (ES) data, but can be calibrated to any other asset. The model includes 2 regimes - a calm regime and a stressed regime, with parameters calibrated separately for each. Parameter values and descriptions can be found in Appendix~\ref{ch:appendix}. In this way, a stressful market environment is produced endogenously. The traders are either Bank Clearing Members trading on their house account, or clients of other Bank and Non-Bank Clearing Members. The clearing layer takes inspiration from the CCP risk model of \cite{deloitte_ccp} and extends it with the client layer, with clearing layer parameters based on regulation and public CCP disclosures. The model is then used to study the effects of client clearing on systemic risk and the procyclicality of margin calls. 
+The data used for calibration is E-mini S\&P 500 (ES) data, but the model can be calibrated to any other asset. The model includes 2 regimes - a calm regime and a stressed regime, with parameters calibrated separately for each. Parameter values and descriptions can be found in Appendix~\ref{ch:appendix}. In this way, a stressful market environment is produced endogenously. The traders are either Bank Clearing Members trading on their house account, or clients of other Bank and Non-Bank Clearing Members. The clearing layer takes inspiration from the CCP risk model of \cite{deloitte_ccp} and extends it with the client layer, with clearing layer parameters based on regulation and public CCP disclosures. The model is then used to study the effects of client clearing on systemic risk and the procyclicality of margin calls. 
 
 
 %==============================================================================
@@ -31,8 +31,7 @@ where $b_t$ and $a_t$ are the best bid and best ask at the end of step $t$. The 
 \subsection{Trading Agents}
 \label{sec:agents}
 
-The book is populated by 100 trading agents of three types - 40 fundamental traders (FT), 20 momentum traders (MT), and 40 noise traders/zero-intelligence traders (ZI). The ZIs serve as a constant source of liquidity to the book, the FTs keep asset price anchored to an exogenous fundamental signal, and the MTs amplify price movements and trade on trend. Ten of the FTs also serve as Bank Clearing Members (BCMs), and the remaining 30 and the ZI and MT traders serve as clients of other BCMs and Non-Bank Clearing Members (NBCMs). FTs and MTs place limit orders at each step, with new orders replacing old orders. ZIs place both limit and market orders, and order cancellations, leading to the presence of resting orders on the book. FTs place limit orders at a heterogeneous fundamental signal they observe, and MTs and ZIs place limit orders at a depth of $k$ steps from the previous mid, drawn from a geometric distribution $k \sim \mathrm{Geometric}(p_d)$, where $p_d$ can be fit to L2 order book or calibrated alongside other parameters. A log-normal depth was trialled, but stylised facts were more easily reproduced with a geometric depth of limit order placement.  Order sizes are drawn uniformly from $[1, q_{\max}]$ for each trader.
-
+The book is populated by 100 trading agents of three types - 40 fundamental traders (FT), 20 momentum traders (MT), and 40 noise traders/zero-intelligence traders (ZI). The ZIs serve as a constant source of liquidity to the book, the FTs keep asset price anchored to an exogenous fundamental signal, and the MTs amplify price movements and trade on trend. Ten of the FTs also serve as Bank Clearing Members (BCMs), and the remaining 30 and the ZI and MT traders serve as clients of other BCMs and Non-Bank Clearing Members (NBCMs). FTs and MTs place limit orders at each step, with new orders replacing old orders. ZIs place both limit and market orders, and order cancellations, leading to the presence of resting orders on the book. FTs place limit orders at a heterogeneous fundamental signal they observe, and MTs and ZIs place limit orders at a depth of $k$ steps from the previous mid, drawn from a geometric distribution $k \sim \mathrm{Geometric}(p_d)$, where $p_d$ can be fit to L2 order book or calibrated alongside other parameters. A log-normal depth was trialled, but stylised facts were more easily reproduced with a geometric depth of limit order placement.  Order sizes are drawn uniformly from $[1, 10]$ for each trader. Each model order unit represents a block of ES contracts — 18 in the calm regime, 32 in the stressed — chosen so that the simulated per-minute volume matches the empirical ES volume (≈2,000 and ≈3,500 contracts per minute).
 \subsubsection{Fundamental Trader}
 
 Fundamental traders trade based on the fundamental value of the stock. The fundamental value $V_t$ is fed as an exogenous signal. To introduce heterogeneity, each FT carries a fixed belief offset $z_i \sim \mathcal{N}(0,1)$ drawn at initialisation, so each FT carries its own private valuation. At each step, fundamental traders place a limit order at a reservation $R^{i}_t$ from the fundamental value (FV) signal:- 
@@ -103,226 +102,140 @@ returns,
 with the weight $\phi$ averaging over a short intraday window and the average reset at each session open so the overnight gap does not enter it. 
 
 
+%==============================================================================
+\section{Central Clearing Layer}
+
+The clearing layer offers a simplified but realistic representation of CCP practises, complete with a margin cycle and a default waterfall framework. It guarantees the trades formed in the market of Section~\ref{sec:model-market}. The network is formed by the CCP as a central node, connected to a tier of Bank Clearing Members (BCMs) and Non-Bank Clearing Members (NBCMs), similar to the CCP risk model of \cite{simudyne_odd}, and extends it with a layer of clients that clear through the NBCMs and some of the BCMs. Constants used in the clearing layer, such as the balance sheet sizes of members and default fund and margin sizing are based on regulatory standards or CCP disclosures. The clearing layer and the market layer are connected through a feedback loop; prices formed in the market layer drive margin calls and concentrated portfolios, leading to trading freezes or liquidations when clients and CMs approach capital ratios, which lead to price impact and lower liquidity in the market layer, driving further margin calls. 
+
+%------------------------------------------------------------------------------
+
+\subsection{Clearing Members and Topology}
+\label{sec:clearing-topology}
+
+The CCP is connected to a layer of 10 BCMs - out of which 5 offer client clearing -, and 5 NBCMs. The NBCMs do not trade, and the BCMs are modelled as Fundamental Traders. There are 90 clients, each attached to a NBCM or a BCM, modeeled as a fundamental trader, momentum trader or noise trader (Figure~\ref{fig:clearing_topology}). The CCP novates each trade, and the CMs guarantee client positions and post margins on their behalf, relaying the margin calls down to them.
+
+\subsubsection{Central Counterparty (CCP)}
+
+The CCP novates every cleared trade, maintains the member registry and
+the per-member default-fund accounts, issues the margin calls, and manages defaults in accordance with a five-level default waterfall. The CCP has it's own capital of \$1.5\,billion, mimicing the scale of a large clearing house. It uses this capital to contribute to the default fund, a CCP \emph{skin-in-the-game} (SITG), sized at $3\%$ of the overall pooled default fund \citep{fia_tracker}. When a Clearing Member defaults, the CCP takes on their residual book (client books are ported to other CMs) and transfers it to a surviving member with the largest offsetting position at a discount, a simplification of the closeout auctions CCPs perform in reality. Specifics on the default management framework are laid out in (Section~\ref{sec:model-default}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/clearing_topology.png}
+  \caption{The tiered clearing topology. A central counterparty novates every cleared trade; ten
+  banking and five non-banking clearing members hold bilateral links to it; ninety end-clients
+  clear through the ten client-carrying members. Banking members additionally trade their own
+  accounts.}
+  \label{fig:clearing_topology}
+\end{figure}
+
+\subsubsection{Banking Clearing Members (BCMs)}
+
+There are 10 total BCMs, all 10 trading a house account under the fundamental trader logic \ref{sec:agents}, and 5 among these offer client clearing services. All BCMs carry institutional scale initial capital, drawn from  $U[\$5,\$10]$\ billion, in line with observed scales \citep{cftc_fcm}. The Basel Leverage ratio is used as a constraint for these members \citep{haynes_mcphail_zhu_2019,acosta_smith_2018}. They trade under the constraint  $\kappa = \mathrm{cash}/\mathrm{exposure} \ge 8\%$, where cash is net of posted margin and exposure is the member own and it's client cleared notional. Besides accumulated positions, higher margins also lower cash and hence add to the transmission of stress by tightening the capital ratio. To restrict unbounded positions in one direction by these BCMs, an additional constraint is established: $|N^{\mathrm{own}}_\tau| \le 2\,C_\tau$ --- a flat cap  in the
+spirit of a trading-book risk limit \citep{basel_frtb}. The limit is set such that the leverage ratio stays comfortably above the constraint in calm periods and only approaches it during stressed periods.
+
+On breaching the $8\%$ floor, a BCM freezes  trading and client clearing, and deleverages its own book until it returns to a $10\%$ capital ratio. As this deleveraging takes place on exchange, the BCM tries to limit price impact through a Almgren-Chriss optimal execution schedule \citep{almgren_chriss_2000}. 
+
+\subsubsection{Non-Banking Clearing Members (NBCMs)}
+
+The five NBCMs have a purely clearing function, they hold no proprietary positions and do not put in orders. Their capital is significantly lower than the BCMs, and drawn from $U[\$0.5\,,\$3]$\ billion, similar to observed levels  \citep{cftc_fcm}. The NBCMs forward margin calls to their clients, but are responsible for client shortfalls on default and the default fund contributions. They have the same capital ratio requirement as the BCMs, but instead of deleveraging they simply freeze clearing services until the capital ratio moves back above the threshold. \cite{simudyne_odd} follow a similar design for deleveraging and freezing between BCMs and NBCMs. 
+
+\subsubsection{Clients}
+
+The client layer is an explicit extension on the work of \cite{deloitte_ccp}. Ninety clients - thirty fundamental traders, twenty momentum traders, and forty noise traders - clear through the NBCMs and the five BCMs that offer client clearing. Each client is connected to a single CM, a simplification in line with \cite{ofr_2026} who find that the modal client only has one clearing connection. Clients are assigned to CMs by a leverage-balanced rule, they are routed to members whose resulting client book to member capital ratio would be highest, so each clear member balance to client size ratio is similar. In simple terms, the larger clients clear through the largest CMs. Divisions are kept heterogenous. CMs hold between five and fifteen clients, with the larger members by capital and the NBCMs who make clearing their business holding larger books. The type of trader allotted is random between fundamental, momentum, and noise. The initial capital of these clients is assumed to be at a lower scale than the Banks -- fundamental clients are drawn from $U[\$0.5,\$3]$\,billion, momentum clients from $U[\$0=0.2,\$1]$\,billion, and noise (zero-intelligence) accounts from $U[\$200,\$500]$\,million. 
+
+A client may take on a position upto its CMs house margin: set at a fixed 15\% of notional This is based on CFTC and SEC minimum customer margin levels for futures products, and is a simplifying assumption to restrict large positions whose margin cannot be financed. Each margin cycle, variation margin is covered through their cash and initial margin is placed to the CCP through the clearing member. Furthermore, a client is subject to the same 8\% capital ratio as the CMs, and freezes trading if it is below this level. If it cannot meet a margin call using its cash, a client has defaulted. On account of a client default, it's clearing member assumes its position and liquidates it over an Almgren-Chriss Schedule \citep{almgren_chriss_2000}, covering any residual shortfall over the clients' posted margins. 
 
 
+%------------------------------------------------------------------------------
+\subsection{Margin and Default Framework}
+\label{sec:clearing-margin}
 
-% %==============================================================================
-% \section{The margin framework}
-% \label{sec:model-margin}
+This subsection covers how margins - Initial and Variation - and Default Fund contributions are designed. It also covers how the CCP handles defaults. 
 
-% The clearing tier connects the market to a single CCP through the star
-% topology of \citet{simudyne_odd}: every clearing member holds a bilateral
-% link to the CCP, which becomes the counterparty to all cleared positions
-% upon novation. Two member types are distinguished, as in the ODD. A
-% \emph{banking clearing member} (BCM) trades its own account --- with
-% fundamental-trader logic, so the market-layer calibration is unaffected by
-% the cast --- and additionally guarantees a book of clients. A
-% \emph{non-banking clearing member} (NBCM) is a pure intermediary with no
-% proprietary position; its entire balance-sheet capacity is client clearing.
-% The thesis extension is the client tier itself: ninety end-clients
-% (fundamental, momentum, and zero-intelligence types) clear through the ten
-% client-carrying members in skewed books of five to fifteen clients, with the
-% non-banking members carrying the largest books. Loss-absorbing capital is
-% initialised at regulatory scale --- bank-level capital for BCMs, the
-% non-bank futures-commission-merchant range for NBCMs, and entity-type-scaled
-% cash for clients --- taken from CFTC member financial data and CCP
-% disclosures.
+\subsubsection{Margin Calls}
 
-% \paragraph{Variation margin.}
-% Every 60 minutes the margin cycle marks each cleared book to the prevailing
-% mid and settles the move in cash. Settlement is computed against
-% \emph{average filled prices}, the ODD's margin-call profit-and-loss
-% convention \citep{simudyne_odd}: writing $N_\tau$ for the end-of-cycle
-% position, $m_\tau$ for the mark, and $\{(q_k, p_k)\}$ for the fills executed
-% during the cycle,
-% \begin{equation}
-% \label{eq:vm}
-% \mathrm{VM}_\tau \;=\;
-% \Bigl[\, N_\tau\,(m_\tau - m_{\tau-1})
-% \;+\; \textstyle\sum_k q_k\,(m_{\tau-1} - p_k) \Bigr]\cdot \ell \cdot \chi ,
-% \end{equation}
-% where $\ell$ is the per-regime contract lot that maps model volume to
-% empirical ES volume and $\chi = \$50$ per index point is the CME multiplier.
-% The second term in \eqref{eq:vm} settles each trade from its execution
-% price, so that the slippage of forced liquidations
-% (Section~\ref{sec:model-default}) is borne in cash by the liquidating party
-% rather than lost between marks. Cleared participants use futures-style
-% accounting throughout: a fill moves only the position, and cash moves only
-% through the margin cycle.
+Initial Margin (IM) is calculated based on a Clearing Member's gross exposure -- its own book alongside the gross notional of it's client book -- and hence client positions are not netted by default. IM is priced with a Value at Risk (VaR) methodology, at a 99\%ile move over two consecutive days, a standard Margin Period of Risk (MPOR) for such a contract:
 
-% \paragraph{Initial margin.}
-% Initial margin is charged on gross exposure as a value-at-risk scan --- for
-% a single linear future, the SPAN scanning charge coincides with parametric
-% VaR --- per EMIR's requirements for exchange-traded derivatives
-% \citep{emir_rts}:
-% \begin{equation}
-% \label{eq:im}
-% f^{\mathrm{IM}}_\tau \;=\;
-% \max\!\Bigl( f_{\mathrm{floor}},\; z_{99}\,\hat\sigma^{\mathrm{day}}_\tau
-% \sqrt{h} \Bigr),
-% \qquad
-% \mathrm{IM}_\tau = f^{\mathrm{IM}}_\tau \cdot
-% \bigl(\,|N^{\mathrm{own}}_\tau| + \textstyle\sum_{c}|N^{c}_\tau|\,\bigr)
-% \cdot \ell\,\chi\, m_\tau ,
-% \end{equation}
-% with $z_{99}$ the 99\% normal quantile, $h = 2$ days the margin period of
-% risk, and an anti-procyclicality floor $f_{\mathrm{floor}}$ anchored to the
-% CME's ES margin scale. The driving volatility $\hat\sigma^{\mathrm{day}}_\tau$
-% defines the \emph{margin regime}, the experimental lever for the
-% procyclicality hypothesis: in the \emph{reactive} baseline it is an
-% exponentially weighted estimate of realised intraday simulation returns
-% (half-life two sessions), so margin ratchets upward through a crash exactly
-% as CME's ES margin was raised repeatedly through March 2020; a \emph{static}
-% variant fixes it at the regime constant; and a \emph{flat} variant removes
-% the volatility response altogether, charging a constant fraction --- the
-% through-the-cycle comparator contemplated by the anti-procyclicality
-% options of EMIR and the post-2020 margin debate
-% \citep{murphy_2014,esrb_2020}. A maintenance threshold at $95\%$ of initial
-% margin flags margin calls when a cycle's variation margin exceeds the
-% remaining buffer \citep{simudyne_odd}.
+\begin{equation}
+\label{eq:im}
+f_\tau = \max\!\bigl(6\%,\;\; \alpha_{99}\,\sigma^{\mathrm{daily}}_\tau\,\sqrt{\mathrm{MPOR}}\,\bigr),
+\qquad \alpha_{99} = 3.0,\quad \mathrm{MPOR} = 2\ \text{days},
+\qquad \mathrm{IM}_\tau = f_\tau \times \text{exposure}.
+\end{equation}
 
-% \paragraph{Capital adequacy.}
-% Each member's capital ratio is cash over initial margin,
-% \begin{equation}
-% \label{eq:capital}
-% \kappa_\tau \;=\; \frac{C_\tau}{\mathrm{IM}_\tau} \;\geq\; 8\%,
-% \end{equation}
-% the futures-commission-merchant net-capital rule, which sets required
-% capital against \emph{risk margin} rather than gross notional
-% \citep{cftc_reg117}. The distinction matters operationally: an FCM clears
-% many multiples of its capital in client notional, so a notional-based floor
-% would bind permanently, whereas \eqref{eq:capital} binds only as distress
-% approaches. A banking member's proprietary book is additionally capped by a
-% trading-book VaR limit, $|N^{\mathrm{own}}|\,\ell\chi m \leq
-% \beta C / (z_{99}\hat\sigma^{\mathrm{day}})$ with $\beta = 5\%$ of capital,
-% in the spirit of regulatory trading-book risk limits \citep{basel_frtb};
-% without it, the fundamental-trader logic accumulates unbounded prop
-% positions in a trend.
+ $\sigma^{\mathrm{daily}}_\tau$ is the daily return volatility (an
+exponentially-weighted average of recent returns --- the RiskMetrics
+$\lambda\approx0.94$ convention); $\sqrt{\mathrm{MPOR}}$ scales that one-day move up to the two-day
+window, because volatility grows with the square root of time; and $\alpha_{99}=3.0$ is the
+$99\%$ quantile of E-mini S\&P~500 returns based on a Filtered Historical Simulation, as returns are not always normally distributed. The $6\%$ floor is the anti-procyclicality minimum (EMIR Art.~28): in quiet markets the
+raw VaR sits below it, so margin holds at $6\%$; in stress the VaR term takes over and the rate climbs
+with volatility (to $\sim$12--25\%).  A cleared client
+posts its own initial margin: the CCP's call passes down through its clearing member, the client
+funds it from its own cash, and the member transfers it to the CCP.
 
-% \paragraph{Client clearing.}
-% Each client carries its own balance sheet. The margin cycle issues every
-% client its own variation-margin call, paid from the client's own cash and
-% relayed by its member to the CCP; the client's live inventory is novated
-% into the member's cleared book each cycle. A client can open positions only
-% up to its broker house margin --- a fixed $20\%$ of notional, i.e.\
-% five-times leverage, the conservative house multiple above the exchange
-% minimum --- and is frozen (barred from new risk) when its cash falls below
-% $8\%$ of its gross notional. Cash exhaustion is a client default and hands
-% the position to the member (Section~\ref{sec:model-default}). This
-% client tier is the thesis's central extension of the reference model;
-% its empirical motivation --- clients supply the majority of margin at major
-% CCPs and typically depend on a single clearing agent --- is documented by
-% \citet{ofr_2026}.
+IM is recalculated every hour, and and is called in alongside the Variation Margin (VM) on a fixed hourly cycle. Mark-to-Market changes are called in as VM and settled, leading to cash outflows or inflows based on the current mid price. 
+% ==========================================================================
 
-% %==============================================================================
-% \section{The default management framework}
-% \label{sec:model-default}
+\subsubsection{Liquidation and Porting}
 
-% Default management proceeds in three escalating stages --- client default,
-% member distress, member default --- and is closed by the CCP's prefunded
-% resources. All liquidations use the same execution schedule: a position of
-% size $X$ unwound over horizon $H$ follows the closed-form
-% \citet{almgren_chriss_2000} trajectory
-% \begin{equation}
-% \label{eq:ac}
-% \frac{x_j}{X} \;=\; \frac{\sinh\bigl(\kappa (H - j)\bigr)}{\sinh(\kappa H)},
-% \qquad j = 0,\dots,H,
-% \end{equation}
-% with urgency $\kappa H = 2$ and $H = 30$ minutes, executed as market orders
-% on the simulated book --- so liquidation impact is endogenous: the fire-sale
-% walks the very book on which surviving members are marked, which is the
-% price-mediated contagion channel of the model
-% \citep{simudyne_odd,vytelingum_2025}.
+A default is resolved differently by both layers. For a client default, it's CM assumes its position and liquidates it on the open market, following an Almgren-Chriss schedule to limit price impact. The default of a Clearing Member is resolved by the CCP, it covers losses first through the defaulters Initial Margin and transfers its position to the member with the largest opposing position at a recovery rate of 0.80. This is a simplified representation of the auction a CCP does with remaining members, and is meant to limit losses through the fire sales of large positions. The Almgren-Chriss schedule also differs in the stressed and calm period, front loading more aggressively in stressed due to higher volatility, and does not get exercised in calm periods due to a lack of defaults.
 
-% \paragraph{Client default.}
-% A client whose cash is exhausted by variation margin defaults. Its member
-% covers the uncollected margin call, assumes the client's position onto its
-% own book, and liquidates it by \eqref{eq:ac} --- a banking member through
-% its own orders, a non-banking member through orders routed by the CCP on its
-% behalf. Because variation margin settles against fill prices
-% \eqref{eq:vm}, the close-out loss is realised as the fire-sale walks the
-% price: the member's loss is the deficit the liquidation actually produces,
-% not a stylised haircut. This client$\to$member loss assumption is the first
-% link of the cascade under study.
+On a member default the CCP first tries to port the defaulter's surviving clients to other
+client-clearing members that retain leverage-ratio headroom after taking them on.
+Porting is capacity-constrained: clients that cannot be placed are closed out and frozen.
 
-% \paragraph{Member distress.}
-% A member breaching the capital floor \eqref{eq:capital} while still solvent
-% acts before defaulting, asymmetrically by type as in the ODD
-% \citep{simudyne_odd}: a banking member \emph{deleverages}, selling its
-% proprietary book down by \eqref{eq:ac} until the floor is restored; a
-% non-banking member, having no own book to sell, \emph{stops out} ---
-% suspending new client risk, which freezes its clients --- for as long as the
-% breach persists. The stop-out is state-based: it lifts if the ratio
-% recovers. These are the liquidity-withdrawal behaviours that couple margin
-% pressure back into the market layer.
+\subsubsection{Default Fund}
 
-% \paragraph{Member default and the waterfall.}
-% A member whose cash is exhausted defaults. The CCP absorbs the member's
-% realised cash deficit --- the shortfall it owes but cannot pay --- through
-% the five-level waterfall of the reference model \citep{simudyne_odd}, in
-% EMIR's defaulter-pays ordering \citep{emir_rts}:
-% \begin{equation}
-% \label{eq:waterfall}
-% \text{L1 own DF contribution}
-% \;\to\; \text{L2 CCP skin-in-the-game}
-% \;\to\; \text{L3 pooled DF}
-% \;\to\; \text{L4 survivors' cash}
-% \;\to\; \text{L5 CCP capital}.
-% \end{equation}
-% The defaulted member is then removed from the system (ODD step sequence).
-% Its surviving clients are \emph{ported}: each is reassigned to a surviving
-% client-carrying member with spare risk capacity, accepted only if the
-% receiver remains above its capital floor with the transferred book ---
-% porting is the regulatory first option on a member default
-% \citep{emir_rts}, but it is capacity-checked rather than guaranteed, since
-% in practice the modal client has no standing backup agent
-% \citep{ofr_2026}; clients that cannot be placed are closed out and
-% deactivated. The member's own book, together with any unported client
-% positions, passes to the CCP, which disposes of it by \eqref{eq:ac} on the
-% open market. The CCP carries this book in a disposal account marked through
-% the margin cycle: disposal-period losses re-enter the waterfall
-% \eqref{eq:waterfall} of the originating default, so the mutualised loss is
-% the close-out loss actually realised, symmetric with the client treatment.
-% The open-market disposal is a flagged deviation from the ODD, whose default
-% positions are auctioned to the surviving member with the largest opposing
-% position; the deviation is deliberate, as the endogenous price impact of
-% disposal is precisely the contagion mechanism the thesis measures.
+For losses that exceed the IM, CCPs keep a Default Fund (DF) for which they collect contributions from their members. The DF in the model is based on a Cover-2 principle which is the new regulatory standard, the DF size should be large enough to cover the conjoint default of its two largest members by exposure. This is modelled as losses (L) beyond their own margin in an extreme two day move, at a higher confidence level than IM at $\sim$99.9\% of the same FHS volatility, a principle known as Stressed Loss over Initial Margin (SLOIM). The frequency of collections for default funds vary per CCP, from weekly to monthly to quarterly. The model being a short simplified simulation collects it daily.
 
-% \paragraph{The default fund.}
-% The mutualised layers of \eqref{eq:waterfall} are prefunded. The fund is
-% sized daily to the \emph{cover-two} standard --- sufficient for the
-% simultaneous default of the two largest members
-% \citep{emir_rts} --- by the stress-loss-over-initial-margin method of
-% Euronext Clearing \citep{euronext_a9}:
-% \begin{equation}
-% \label{eq:df}
-% \mathrm{DF}_\tau \;=\; (1+b) \sum_{j \in \text{top-2}}
-% \max\Bigl( 0,\; \bigl(s_\tau - f^{\mathrm{IM}}_\tau\bigr)\,
-% |N_{j,\tau}|\,\ell\,\chi\,m_\tau \Bigr),
-% \qquad
-% s_\tau = \max\bigl(15\%,\; z_{s}\,\hat\sigma^{\mathrm{day}}_\tau\sqrt{h}\bigr),
-% \end{equation}
-% the loss each member would suffer beyond posted margin under an
-% extreme-but-plausible move $s_\tau$, with buffer $b = 10\%$. The CCP
-% prefunds a skin-in-the-game share ahead of the pooled fund, consumed at L2
-% before any survivor resources \citep{simudyne_odd}; the EMIR skin-in-the-game
-% rule is expressed against CCP regulatory capital rather than fund size, so
-% the model's fund-share convention is a stylised assumption and is disclosed
-% as such. Member contributions are paid \emph{in cash} into the fund, pro
-% rata to exposure, and every post-draw daily recomputation is therefore a
-% replenishment cash call on survivors --- the margin-liquidity channel that
-% made the March 2020 episode a funding event as much as a solvency one
-% \citep{esrb_2020}. Reverse-stress experiments scale the fundamental path
-% until \eqref{eq:df} is breached, the scenario-design logic of
-% \citet{euronext_a9}.
+The fund covers the two largest
+shortfalls plus a buffer, and the exchange pre-funds a portion as
+SITG (consumed ahead of the mutualised member pool, but after the defaulter's own
+resources):
+\begin{equation}
+\label{eq:df}
+\mathrm{DF} = (1+b)\,\bigl(L_{(1)} + L_{(2)}\bigr), \qquad b = 10\%, \qquad
+\mathrm{SITG} = 3\%\times\mathrm{DF},
+\end{equation}
+where $L_{(1)} \ge L_{(2)}$ are the two largest member shortfalls.  Each member pre-funds its share in
+cash in proportion to its margin; a non-bank member's share rests entirely on its gross client
+book. The SITG level is based on the amounts seen at major CCPs that sit around 1 to 5 \% \citep{cftc_fcm,fia_tracker}.
 
-% Two structural counterfactuals complete the design and operationalise the
-% research questions: a \emph{direct-clearing} configuration, in which the
-% client tier is removed and all end-users face the CCP directly with
-% otherwise identical trading mechanics --- isolating the loss-absorption
-% structure of tiering in the spirit of the netting and tiering trade-offs of
-% \citet{duffie_zhu_2011} and \citet{galbiati_soramaki_2013} --- and the
-% margin-regime switch of Section~\ref{sec:model-margin}. Both are evaluated
-% as paired experiments on identical fundamental paths and random seeds, so
-% that differences in outcomes are attributable to the structural change
-% alone.
+
+\subsubsection{Default Waterfall}
+
+The resources CCPs use to protect against default, such as IM and Default Funds, are known as a CCPs default waterfall. The default waterfall is modelled as shown in Figure~\ref{fig:waterfall}. The first stage is the defaulter's Initial Margin, then their own default fund contribution. Next, a layer of CCP equity known as Skin-in-the-game (SITG) is used, and following that the mutualised pooled default fund. After that, the CCP enters a state of recovery, using more of its equity and practises such as VM gains haircutting, but these recovery steps are not part of the model. In extreme scenarios, the model reaches the pooled default fund.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    font=\small,
+    every node/.style={align=center},
+    tranche/.style={draw, rounded corners=2pt, minimum width=9cm, minimum height=0.85cm},
+    grp/.style={decorate, decoration={brace, amplitude=5pt}, thick},
+    grplab/.style={right=8pt, align=left, font=\footnotesize}
+  ]
+  % --- tranches: absorbed top (first) to bottom (last) ---
+  \node[tranche, fill=Apricot!30]    (l0) at (0, 0) {\textbf{L0}\quad Defaulter's \textbf{Initial Margin}};
+  \node[tranche, fill=Apricot!55]    (l1) at (0,-1) {\textbf{L1}\quad Defaulter's Default Fund contribution};
+  \node[tranche, fill=SkyBlue!45]    (l2) at (0,-2) {\textbf{L2}\quad CCP skin-in-the-game (SITG)};
+  \node[tranche, fill=YellowGreen!40](l3) at (0,-3) {\textbf{L3}\quad Pooled surviving-member Default Fund};
+  \node[tranche, fill=YellowGreen!60](l4) at (0,-4) {\textbf{L4}\quad CCP equity and capital};
+  \node[tranche, fill=Salmon!45]     (l5) at (0,-5) {\textbf{L5}\quad Recovery};
+
+  % --- left: order-of-absorption arrow ---
+  \draw[->, very thick] (-5.0,0.45) -- (-5.0,-5.45);
+  \node[rotate=90, anchor=south, font=\footnotesize] at (-5.42,-2.5) {order of loss absorption};
+
+  % --- right: grouping braces (the ``defaulter pays'' structure) ---
+  % (add ``mirror'' to the brace decoration if it faces the wrong way)
+  \draw[grp] (4.7, 0.42) -- (4.7,-1.42) node[grplab, midway] {Defaulter's own resources\\};
+  \draw[grp] (4.7,-1.58) -- (4.7,-2.42) node[grplab, midway] {CCP first loss};
+  \draw[grp] (4.7,-2.58) -- (4.7,-4.42) node[grplab, midway] {Mutualised across\\survivors };
+  \draw[grp] (4.7,-4.58) -- (4.7,-5.42) node[grplab, midway] {Extreme case -- beyond model};
+\end{tikzpicture}
+\caption{\textbf{The CCP default waterfall.} A clearing-member default triggers a fixed sequence of
+loss-absorbing tranches, drawn strictly top-down, and the model records the deepest level reached.}
+\label{fig:waterfall}
+\end{figure}

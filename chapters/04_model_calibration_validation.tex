@@ -9,353 +9,67 @@
 % %  to fill from output/relock/ (and output/relock_gbm/ for the SV-MJD robustness).
 % %==============================================================================
 
-% Agent-based models do not admit a likelihood function: the mapping from
-% parameters to prices runs through millions of discrete order-book events,
-% so classical estimation is unavailable. The standard response, and the one
-% adopted here, is \emph{simulated moment matching}: choose the behavioural
-% parameters so that summary statistics of the simulated market are as close
-% as possible to the same statistics measured in real data
-% \citep{franke_westerhoff_2012,lamperti_2018,gao_2022_xgb}. This chapter
-% describes the data, the division of parameters into measured, calibrated,
-% and pinned sets, the construction of the loss function, the two independent
-% optimisation methods, and the validation protocol that guards the result.
-% The guiding principles are parsimony --- every parameter must earn its place
-% --- and honesty about identification: where a parameter is weakly identified
-% or sits at a bound, this is disclosed rather than smoothed over.
+This section presents the methodology for calibrating the agent based financial market simulation. As this serves as the first stage and base of the clearing layer, the market simulation should be well calibrated and able to reproduce the features of real market returns. A common method to do this, and the one adopted by this model, is the reproduction of the moments of empirical returns through the simulation. This chapter describes the data used, the parameters calibrated, the method of calibration and the calibration, and a validation of the calibrated parameters. The chosen moments are the stylised facts of returns we see empirically - the distribution of returns, heavy tails, absence of autocorrelation and volatility clustering. 
 
-% %==============================================================================
-% \section{Data and regimes}
-% \label{sec:cal-data}
+\section{Data and Regimes}
 
-% The empirical basis is the E-mini S\&P~500 futures tape: one-minute bars of
-% the front-month contract, rolled at volume crossover, restricted to regular
-% trading hours, with the quote midpoint $(b_t + a_t)/2$ as the price series
-% --- the same observable the simulator produces, so all comparisons are
-% like-for-like. Two regimes are calibrated as fully independent problems. The
-% \emph{calm} regime spans calendar year 2019 ($257$ sessions, roughly
-% $10^5$ one-minute observations); the \emph{stressed} regime spans the
-% COVID-19 crash window from late February to early April 2020 ($29$
-% sessions). Regimes are calibrated separately because the two market states
-% differ in volatility, book depth, and microstructure, and forcing shared
-% parameters across them would trade fit for compromise; the regime-switch
-% design follows the calm/stressed convention of the reference model
-% \citep{simudyne_odd}. Returns are intraday log-returns of the mid;
-% overnight (session-boundary) returns are excluded on both the empirical and
-% simulated sides, with session boundaries read from the data --- real ES
-% sessions vary in length, and a fixed-grid convention was found to leak
-% overnight gaps into the intraday moments. A separate market-by-price
-% (MBP-10) sample of order-book events supports the direct measurement of
-% placement depth.
+The dataset used for calibration is the E-mini S\&P futures at a one minute frequency, matching the model time steps. There are two separate regimes, a calm regime and a stressed regime. The calm regime spans the a calm stretch in late 2019, and the stressed regime includes data from the early Covid-19 window, which was referred to as the most significant test of the resilience of financial markets since the GFC \citep{bcbs_cpmi_iosco_2022}. Parameters are calibrated separately on both regimes, as they differ substantially in volatility, microstructure and return distribution. Returns are intraday log-returns of the mid price, and some summary statistics are reported in \ref{tab:cal-data}.
 
-% %==============================================================================
-% \section{Measured, calibrated, and pinned parameters}
-% \label{sec:cal-split}
+\begin{table}[h] 
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\caption{\textbf{Empirical summary statistics for the two calibration regimes.}}
+\label{tab:cal-data}
+\begin{threeparttable}
+\begin{tabular}{lccccccccc}
+\toprule
+ & & \multicolumn{4}{c}{One-minute returns} & \multicolumn{4}{c}{Daily returns}\\
+\cmidrule(lr){3-6}\cmidrule(lr){7-10}
+Regime & Sessions & Mean & SD & Skew. & Ex.\ kurt. & Mean & SD & Skew. & Ex.\ kurt.\\
+ & & (bps) & (bps) & & & (\%) & (\%) & &\\
+\midrule
+Calm (2019) & 75 & 0.00 & 2.40 & $-1.41$ & 55.0 & 0.10 & 0.60 & $-0.85$ & 1.66 \\
+Stressed (2020) & 73 & $-0.03$ & 12.40 & $-1.24$ & 67.1 & $-0.13$ & 3.14 & $-0.31$ & 2.50 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]\footnotesize
+\item One-minute returns exclude overnight gaps; daily returns are close-to-close. bps$=10^{-4}$.
+\item Both regimes hold $\approx$29{,}000 one-minute observations (29{,}961 vs 28{,}866) over a
+comparable number of full RTH sessions (75 vs 73), so the two samples are of matched size.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
 
-% Parameters enter the model through three doors, and only one of them
-% involves optimisation.
+Limit order depth placement follows a geometric law calibrated besides the other parameters, but this can also be directly estimated from L2 data. 
 
-% \emph{Measured offline.} Everything that can be estimated directly from
-% data, is: the fundamental-value process and its local volatility
-% (Section~3.\ref{sec:model-fv}); the order-placement depth parameter
-% $p_{\mathrm{zi}}$, fitted by maximum likelihood to the distance-from-mid
-% distribution of new limit orders in the MBP-10 data (a one-parameter
-% geometric law is compared against a two-parameter log-normal by likelihood
-% and retained); and the loss-absorbing capital of members and clients, taken
-% from public FCM financial data and CCP disclosures. None of these re-enters
-% the calibration loop, with one disclosed exception: under stress the
-% placement parameter is calibrated rather than fixed, because the ablation
-% study showed a sparser book materially improves the stressed fit while the
-% calm fit prefers the directly measured value.
+\section{Loss Function: Stylised Facts Distance}
+\label{sec:cal-loss}
 
-% \emph{Pinned by design.} Structural choices follow their references rather
-% than the optimiser: the momentum horizon $\lambda$ is fixed externally as in
-% \citet{majewski_2018}, who pin theirs to the six-month horizon implied by
-% CTA-index correlations; the zero-intelligence market-order rate stays at the
-% reference model's baseline value \citep{simudyne_odd}, structured after
-% \citet{cont_stoikov_talreja_2008} (the ablation found calibrating it changes
-% the fit negligibly); fundamental and momentum traders act every
-% step, per the reference step sequence \citep{simudyne_odd}; and all
-% clearing-tier constants are regulatory pins
-% (Chapter~3.\ref{sec:model-margin}).
+The market layer is calibrated to reproduce the stylised facts of returns we see in markets \citep{cont_2001} such as heavy tails, near-zero autocorrelation, and volatility clustering. Five different moments are used as proxies for these stylised facts, and are computed on simulated and empirical one minute log-returns. Parameters are chosen to reduce the distance between a weighted loss function defining these stylised facts in the simulation and in empirical data, similar to \cite{gao_2022_xgb}. The function there is further extended by the Hill Tail index used in \cite{gao_2022_hfabm}, and the weighted loss function takes the form:
+\begin{equation}
+\label{eq:cal-D}
+D(\theta) = w_{\mathrm{KS}}\,\mathrm{KS}(\theta) + w_{V}\,\Delta V(\theta)
+          + w_{\mathrm{ACF1}}\,\Delta\mathrm{ACF1}(\theta)
+          + w_{\mathrm{ACF2}}\,\Delta\mathrm{ACF2}(\theta)
+          + w_{\mathrm{Hill}}\,\Delta\mathrm{Hill}(\theta).
+\end{equation}
+The calibrated parameter vector is the minimisation of this distance over the admissible set $\Theta$,
+\begin{equation}
+\label{eq:cal-argmin}
+\hat\theta = \arg\min_{\theta\in
+\Theta} D(\theta).
+\end{equation} 
 
-% \emph{Calibrated.} What remains is a deliberately small behavioural set,
-% regime-specific: in the calm regime the three-dimensional vector
-% $\theta = (c_f,\ \alpha_{\mathrm{zi}},\ \delta_{\mathrm{zi}})$ --- the
-% fundamental-trader belief-width scale and the zero-intelligence limit-order
-% arrival and cancellation rates --- and under stress the same set plus
-% $p_{\mathrm{zi}}$, four dimensions in all. Search bounds are
-% literature-anchored: the ZI rates are confined to ranges of the same order
-% as their \citet{cont_stoikov_talreja_2008} baselines (an early unconstrained
-% run drove the market-order rate to twenty times its reference value,
-% producing a book-sweeping artefact), and the belief-width box was tightened
-% after diagnostic runs located the economically sensible basin.
-% % [NUMBERS: final bounds table from calibrate.py PARAM_BOUNDS_BY_REGIME]
+A description of the five stylised facts are given below.
 
-% %==============================================================================
-% \section{Targets and the loss function}
-% \label{sec:cal-loss}
+\paragraph{Distribution (KS).} The Kolmogorov--Smirnov statistic, from the KS test which tests for the equality of probability distributions.
+$\mathrm{KS}=\sup_x|F_{\mathrm{sim}}(x)-F_{\mathrm{emp}}(x)|$ is the largest gap (supremum) between the simulated
+and empirical return distribution functions. Matching it forces the simulated returns to share the
+distribution function of the empirical distribution, which is an estimate of the cumulative distribution function \citep{gao_2022_xgb}. This also forces realistic excess kurtosis values, and without this moment kurtosis has a tendency to balloon to very large values. 
 
-% \subsection{The stylised-fact battery}
-
-% The calibration targets are the stylised facts of high-frequency returns
-% \citep{cont_2001}, the statistical fingerprints that any credible simulated
-% market must reproduce. In plain terms: returns are \emph{fat-tailed} (large
-% moves occur orders of magnitude more often than a Gaussian allows); returns
-% are \emph{linearly unpredictable} (the autocorrelation of returns is
-% near zero from the first lag --- the price is close to a martingale); and
-% volatility \emph{clusters} (the autocorrelation of absolute returns is
-% positive and decays slowly --- turbulent minutes follow turbulent minutes).
-% These three facts are encoded in five moment groups, computed identically
-% on simulated and empirical intraday mid returns:
-
-% \begin{itemize}
-%   \item \textbf{KS} --- the two-sample Kolmogorov--Smirnov statistic
-%         $\sup_x |\widehat F_{\mathrm{sim}}(x) - \widehat F_{\mathrm{emp}}(x)|$
-%         between the simulated and empirical return distributions, the
-%         whole-distribution target of \citet{gao_2022_xgb}. Intuitively, it
-%         is the largest vertical gap between the two cumulative distribution
-%         curves: zero would mean the simulated return distribution is
-%         indistinguishable from the real one.
-%   \item \textbf{V} --- the return standard deviation, anchoring the overall
-%         volatility scale \citep{gao_2022_hfabm}.
-%   \item \textbf{ACF1} --- the return autocorrelation at lags
-%         $\{1, 5, 10, 20\}$ minutes, each smoothed over three adjacent lags
-%         as in \citet{gao_2022_xgb} (whose lag centres $\{1,10,20\}$ are
-%         extended here with a five-minute centre); its target is the
-%         empirical near-zero profile, so this group penalises any mechanical
-%         predictability the agents might introduce (e.g.\ bid--ask bounce or
-%         trend-chasing).
-%   \item \textbf{ACF2} --- the \emph{absolute}-return autocorrelation at the
-%         same lags: the volatility-clustering target. Absolute returns are
-%         used instead of squared returns deliberately: $r^2$ is dominated by
-%         a handful of extreme observations, which makes its autocorrelation
-%         so noisy that a clustering miss would vanish under the
-%         standardisation below; $|r|$ carries the same signal with far less
-%         sampling noise \citep{cont_2001}.
-%   \item \textbf{Hill} --- the \citet{hill_1975} tail index, estimated on
-%         the upper tail of $|r|$ and averaged over a band of tail fractions
-%         for stability. The index $\alpha$ summarises how fast the tail
-%         decays ($\Pr(|r|>x)\sim x^{-\alpha}$): empirical equity-index
-%         returns sit near $\alpha \approx 3$, the ``cubic law''; smaller
-%         values mean fatter tails. Following \citet{gao_2022_hfabm}, Hill
-%         rather than kurtosis is the tail target --- excess kurtosis is
-%         tracked only as a diagnostic, because it is governed by the few
-%         largest observations in the sample and matching it amounts to
-%         chasing noise.
-% \end{itemize}
-
-% KS and Hill are paired deliberately. The ablation study
-% (Section~\ref{sec:cal-validation}) shows each controls a failure mode the
-% other cannot: with KS alone the optimiser can match the body of the
-% distribution while the tail explodes; with Hill alone the tail is pinned
-% but the body drifts. Together they constrain the distribution everywhere.
-
-% \subsection{Aggregation: noise-standardised distances}
-
-% The five groups mix units --- a standard deviation of order $10^{-4}$, a
-% dimensionless KS statistic, autocorrelations, a tail index near $3$ --- so
-% they cannot simply be added. Following the inverse-variability weighting of
-% \citet{franke_westerhoff_2012}, each moment's distance is expressed in
-% units of that moment's own \emph{sampling noise}:
-% \begin{equation}
-% \label{eq:loss}
-% D(\theta) \;=\; \sum_{c \in \{\mathrm{KS, V, ACF1, ACF2, Hill}\}} \Delta_c(\theta),
-% \qquad
-% \Delta_c(\theta) \;=\; \frac{1}{|M_c|}\sum_{m \in M_c}
-% \frac{\bigl|\,\widehat m_{\mathrm{sim}}(\theta) - \widehat m_{\mathrm{emp}}\,\bigr|}{s_m},
-% \end{equation}
-% where $s_m$ is the empirical sampling standard deviation of moment $m$,
-% estimated once per regime by a moving-block bootstrap \citep{kunsch_1989}
-% on the historical returns, with block length equal to one full session ---
-% longer than the longest autocorrelation lag in the battery, so resampling
-% preserves the dependence structure the ACF moments measure. The intuition
-% is that $|\widehat m_{\mathrm{sim}} - \widehat m_{\mathrm{emp}}|/s_m$ is a
-% $z$-statistic: a value of two means the simulated moment misses its target
-% by about two standard errors of what historical sampling variation alone
-% could produce, and $D$ counts such standardised misses across the battery.
-% This is the diagonal, absolute-deviation member of the
-% \citet{franke_westerhoff_2012} family: the full inverse-covariance
-% weighting is ill-conditioned with this many moments and one historical
-% sample, inverse-\emph{variance} weights are scale-pathological here (the
-% tiny sampling variance of the return standard deviation would inflate its
-% component by orders of magnitude), and raw equal weights would let the
-% large-scale moments bury the small ones.
-
-% One property of \eqref{eq:loss} is recorded for honest reporting: the KS
-% statistic is a two-sample distance whose sampling scale shrinks with the
-% \emph{simulated} sample size, so $s_{\mathrm{KS}}$ is computed at the
-% simulation's sample size and $D$ values are comparable only between runs
-% with the same number of simulated days and seeds. All headline comparisons
-% in the results chapter therefore hold the seed count fixed.
-
-% %==============================================================================
-% \section{Two optimisation methods, one answer}
-% \label{sec:cal-methods}
-
-% The loss \eqref{eq:loss} is minimised twice, by two methods from the same
-% research line, and the result is accepted only if they agree. The logic of
-% the pairing: the grid is transparent and exhaustive but expensive and
-% coarse; the surrogate is efficient and fine-grained but introduces an
-% approximation layer. Each covers the other's weakness.
-
-% \subsection{Exhaustive grid search}
-
-% The first method evaluates the true simulator on a regular grid over the
-% parameter box and takes the minimiser --- precisely the calibration of
-% \citet{gao_2023}, who fit their Chiarella--Heston model by grid search on
-% the same kind of stylised-fact distance. Each node is simulated over
-% multiple seeds and several trading weeks, and the loss is computed on the
-% pooled returns. At three to four dimensions this is computationally
-% feasible and has two virtues that matter for a thesis: it cannot be misled
-% by an approximation (every evaluation is the real model), and it returns
-% the \emph{entire loss surface}, so identification --- which parameters the
-% data actually pins down, and which directions are flat --- can be read
-% directly off the output rather than asserted.
-% % [NUMBERS: grid resolution per regime (D65 re-lock: calm 5^4=625, stressed
-% %  4^5=1024), n_days=20, n_runs=3, surfaces in output/relock/grid_surface_{regime}.csv]
-
-% \subsection{Surrogate-assisted simulated moment matching}
-
-% The second method is the machine-learning-surrogate approach of
-% \citet{gao_2022_hfabm} and \citet{gao_2022_xgb}, with the same two-stage
-% structure (and the broader logic of surrogate calibration for ABMs
-% introduced by \citealp{lamperti_2018}). The motivating problem is cost: one
-% evaluation of $D(\theta)$ requires simulating weeks of market activity over
-% several seeds, so the budget of true evaluations is a few hundred, far too
-% few to optimise directly. The surrogate procedure spends that budget
-% strategically:
-
-% \begin{enumerate}
-%   \item \emph{Design.} Sample the parameter box with a low-discrepancy
-%         (Sobol) design --- points spread to cover the box evenly, which
-%         beats random or Latin-hypercube sampling at small budgets --- and
-%         run the true simulator at each point.
-%   \item \emph{Surrogate.} Train a gradient-boosted tree regressor
-%         \citep{chen_guestrin_2016} to predict the scalar loss,
-%         $\widehat D: \theta \mapsto D$. A single model for the aggregate
-%         loss is used, rather than one per moment, because one smooth(er)
-%         scalar surface is more learnable from few points than twenty noisy
-%         per-moment surfaces; its held-out $R^2$ is the running check that
-%         the surrogate can be trusted at all. Loss labels are clipped at a
-%         high percentile so a few catastrophic parameter draws do not
-%         dominate the fit \citep{gao_2022_xgb}.
-%   \item \emph{Active learning.} For a small number of rounds, score a large
-%         candidate pool with the surrogate and run the true simulator on a
-%         roughly 2:1 mix of \emph{exploit} points (lowest predicted loss)
-%         and \emph{explore} points (random), retraining after each round
-%         \citep{gao_2022_xgb} --- concentrating expensive simulations where
-%         the optimum is likely to be, while keeping enough exploration to
-%         escape a misled surrogate.
-%   \item \emph{Stage-1 optimum.} Minimise the surrogate by dense evaluation
-%         over a Sobol pool and take the argmin. Gradient methods are
-%         deliberately avoided: a tree ensemble is piecewise constant, so its
-%         gradients are zero or undefined almost everywhere.
-%   \item \emph{Stage-2 refinement.} Around the surrogate optimum, evaluate
-%         the \emph{true} simulator on a tight local design and select the
-%         best true-loss point \citep{gao_2022_hfabm} --- correcting for
-%         surrogate approximation error in the final answer.
-%   \item \emph{Out-of-sample validation.} Re-simulate the selected
-%         $\theta^\ast$ on seeds never used in the search and report the loss
-%         and the full moment comparison at those fresh seeds.
-% \end{enumerate}
-
-% In plain terms: the simulator is expensive, so a cheap statistical copy of
-% the loss surface is learned, used to decide where to look, and then the
-% \emph{real} simulator has the final word both in the local refinement and
-% in validation.
-
-% \subsection{Cross-validation between methods}
-
-% Both methods minimise the identical loss on identical targets, so their
-% optima should coincide up to the grid's resolution and the loss surface's
-% flat directions. Agreement on the well-identified parameters --- and
-% documented, benign disagreement along near-flat directions --- is treated
-% as the central evidence that the reported optimum is a property of the
-% model and data rather than of the optimiser.
-% % [NUMBERS: side-by-side grid vs surrogate optima per regime, from
-% %  output/relock/ (Kalman, D65 lock) and
-% %  output/relock_gbm/ (SV-MJD scenario generator, D65 re-lock)]
-
-% The same pipeline is run twice end-to-end: once for the primary
-% (data-derived) fundamental and once for the stochastic-volatility
-% scenario generator of Chapter~3.\ref{sec:model-fv}, which receives its own
-% behavioural optimum --- the simulated fundamental redistributes variance
-% differently across time, so borrowing the primary $\theta$ would
-% misattribute the difference to the agents.
-
-% %==============================================================================
-% \section{Validation protocol}
-% \label{sec:cal-validation}
-
-% Four layers of validation guard the calibration, in increasing order of
-% scope.
-
-% \paragraph{Fresh-seed re-ranking (selection noise).}
-% A grid minimiser is an argmin over hundreds of noisy few-seed loss
-% estimates, so the winning node is partly the \emph{luckiest} node and its
-% reported loss is biased low --- a winner's curse. After every grid run, the
-% top nodes are re-evaluated on fresh, common random seeds and re-ranked; the
-% calibration is accepted only if the optimum survives re-ranking within
-% noise. The same concern motivated rejecting an apparent improvement during
-% the robustness campaign (below): a configuration that looked markedly
-% better at screening resolution failed to replicate at higher resolution,
-% and the episode is reported as a methodological caution --- a high
-% surrogate $R^2$ does not guarantee a reproducible optimum; only
-% replication across seeds does.
-
-% \paragraph{Moment-level validation.}
-% At the accepted optimum, the full moment battery is compared to its targets
-% at out-of-sample seeds --- including the diagnostic moments excluded from
-% the loss (kurtosis) --- and long-horizon checks aggregate the simulated
-% path to daily frequency to verify the fit does not hold at one minute by
-% distorting coarser scales. One known limitation is stated up front: the
-% absolute-return autocorrelation is matched at short horizons but decays too
-% quickly beyond roughly half an hour, the structural signature of a
-% single-timescale momentum sector; multi-scale volatility memory requires
-% mechanisms outside this model class \citep{cont_2001}, and the attempt to
-% revive it with a second momentum cohort failed (below).
-
-% \paragraph{Ablation study (design validation).}
-% Each load-bearing design choice is validated by switching it off (or
-% pinning it) in an otherwise identical calibration and re-measuring the
-% loss: twelve cells covering the fundamental process (data-derived versus
-% synthetic), the presence of the market maker and volatility trader, the
-% pinning of each calibrated parameter in turn, and the composition of the
-% loss itself (KS-only and Hill-only variants). The ablation answers, choice
-% by choice, the examiner's question ``would the model be worse without
-% this?'' --- and its headline findings shaped the final design: the
-% belief-width scale $c_f$ is the dominant tail lever and must be calibrated;
-% the KS--Hill pairing is necessary in both directions; the market maker
-% hurts both regimes; the data-derived fundamental beats the synthetic one
-% once the tail is controlled.
-% % [NUMBERS: ablation table C0–C11 from AGENT.md / output, with per-cell D]
-
-% \paragraph{Robustness campaign (parsimony validation).}
-% Finally, a campaign of richer model variants tested whether the small
-% calibrated set leaves systematic fit on the table: activation and
-% cancellation gates for the fundamental and momentum traders, a second
-% momentum cohort and larger momentum populations, a calibrated momentum
-% horizon, combinations thereof, and calibration with the clearing tier
-% switched on. The verdict is a parsimony result, reported as a finding
-% rather than a failure: the multi-parameter extensions do not earn their
-% parameters --- their apparent gains either fail to replicate across seeds
-% or add estimation variance without fit --- and the only consistent
-% improvement (a calibrated momentum horizon under stress) is small enough
-% that the externally pinned horizon is retained on parsimony grounds. One
-% campaign result doubles as a scope condition for the clearing chapters:
-% calibrating with the clearing tier \emph{active} leaves the calm fit
-% unchanged but materially shifts the stressed dynamics, i.e.\ the
-% market-layer calibration is not invariant to clearing feedbacks under
-% stress. The baseline is therefore calibrated bare-market --- matching the
-% reference models, and keeping the clearing tier's parameters out of the
-% behavioural loop --- and this non-invariance is flagged wherever stressed
-% clearing results are interpreted.
-% % [NUMBERS: campaign table E0–E6 from output/campaign*/, screening vs
-% %  confirmation resolution, from writing.md §4.3]
-
-% \bigskip
-% \noindent
-% The calibrated values, fit quality, loss surfaces, ablation and campaign
-% tables, and the cross-method comparison are reported in the results
-% chapter; the clearing-tier experiments in the chapters that follow take the
-% locked market layer as given.
+\paragraph{Volatility ($\Delta V$).} The absolute difference in return standard deviation between the empirical and simulated returns
+\begin{equation}
+\Delta V = \big| \sigma_{\mathrm{sim}} - \sigma_{\mathrm{emp}} \big|,
+\end{equation}
+where $\sigma$ denotes the standard deviation of the one-minute return series.

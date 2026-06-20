@@ -29,6 +29,8 @@
 \usepackage{lscape}
 \usepackage{pdflscape}
 \usepackage[section]{placeins}
+\usepackage[dvipsnames]{xcolor}   
+\usetikzlibrary{decorations.pathreplacing}
 
 % -------------------------------------------------------------------
 % MATH AND TABLES
@@ -59,7 +61,11 @@
 % -------------------------------------------------------------------
 % BIBLIOGRAPHY AND LINKS
 % -------------------------------------------------------------------
-\usepackage{natbib}
+\usepackage[round,authoryear]{natbib}   % APA-style author–year:
+                                        %   \citep{key} -> (Author, 2020)
+                                        %   \citet{key} -> Author (2020)
+\bibliographystyle{apalike}             % author–year .bst (or plainnat / abbrvnat).
+                                        % Do NOT use plain / unsrt / ieeetr — those force [1] numbers.
 \usepackage[
     colorlinks=true,
     linkcolor=black,
@@ -70,7 +76,6 @@
     pagebackref=true
 ]{hyperref}
 \usepackage{url}
-
 % -------------------------------------------------------------------
 % HEADERS AND PAGE STYLE
 % -------------------------------------------------------------------

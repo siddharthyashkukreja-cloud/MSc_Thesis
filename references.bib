@@ -290,6 +290,114 @@
   note        = {BIS d590, \url{https://www.bis.org/bcbs/publ/d590.pdf}}
 }
 
+% ---- Clearing-layer primary sources (methodology chapter) ------
+
+% CME margin engine: for a single linear future the SPAN scan coincides with parametric VaR.
+@misc{cme_span,
+  author       = {{CME Group}},
+  title        = {{CME SPAN}: Standard Portfolio Analysis of Risk --- Methodology},
+  howpublished = {CME Group risk-management documentation},
+  year         = {2023},
+  note         = {\url{https://www.cmegroup.com/solutions/risk-management/performance-bonds-margins/span-methodology.html}}
+}
+
+% Variation-margin cadence (>= twice-daily MtM + intraday calls) and the default waterfall order.
+@techreport{cme_fsg,
+  author      = {{CME Group}},
+  title       = {{CME} Clearing Risk Management and Financial Safeguards},
+  institution = {CME Group}, year = {2023},
+  note        = {\url{https://www.cmegroup.com/clearing/files/financialsafeguards.pdf}}
+}
+
+% Cover-2 / prefunded default-resource standard (PFMI Principle 4).
+@techreport{pfmi,
+  author      = {{CPSS-IOSCO}},
+  title       = {Principles for Financial Market Infrastructures},
+  institution = {Bank for International Settlements and International Organization of Securities Commissions},
+  month       = {April}, year = {2012},
+  note         = {CPSS Publications No.~101 (BIS d101), \url{https://www.bis.org/cpmi/publ/d101.htm}}
+}
+
+% CCP-bank nexus; source for the Lehman default-management figure (~35% of IM, no DF draw).
+@article{bis_2018,
+  author  = {Faruqui, Umar and Huang, Wenqian and Tak{\'a}ts, El{\H{o}}d},
+  title   = {Clearing Risks in {OTC} Derivatives Markets: The {CCP}-Bank Nexus},
+  journal = {BIS Quarterly Review},
+  month   = {December}, year = {2018},
+  note    = {\url{https://www.bis.org/publ/qtrpdf/r_qt1812h.htm}}
+}
+
+% Default-management auctions recover near par on a hedged book (close-out recovery anchor).
+@techreport{iosco_pd657,
+  author      = {{CPMI-IOSCO}},
+  title       = {Central Counterparty Default Management Auctions --- Issues for Consideration},
+  institution = {Bank for International Settlements and International Organization of Securities Commissions},
+  month       = {June}, year = {2020},
+  note         = {CPMI Papers No.~192 / IOSCO PD657, \url{https://www.iosco.org/library/pubdocs/pdf/IOSCOPD657.pdf}}
+}
+
+% --- client house-margin basis (security-futures statutory minimum) ---
+@misc{cftc_sec_secfutures_margin,
+  author       = {{U.S. Securities and Exchange Commission and U.S. Commodity Futures Trading Commission}},
+  title        = {Customer Margin Rules Relating to Security Futures},
+  year         = {2002},
+  howpublished = {Joint final rules, codified at 17~C.F.R.~\S\S~242.400--242.406 (SEC) and 41.42--41.49 (CFTC)},
+  note         = {Minimum customer margin for unhedged security futures set at 20\% of current market value; lowered to 15\% in 2020 (SEC Rel.\ No.~34-90244). \url{https://www.sec.gov/rules-regulations/2002/08/customer-margin-rules-relating-security-futures}}
+}
+
+% --- FCM house margins above the exchange minimum ---
+@misc{nfa_margins,
+  author       = {{National Futures Association}},
+  title        = {Margins Handbook},
+  howpublished = {NFA Member Resources. \url{https://www.nfa.futures.org/members/member-resources/files/margins-handbook.pdf}},
+  note         = {FCMs may require customer margin above exchange/clearinghouse minimums (``house'' margin). Accessed June 2026}
+}
+
+% --- FCM capital scale (replaces the wrong fia_tracker key) ---
+@misc{cftc_fcm,
+  author       = {{U.S. Commodity Futures Trading Commission}},
+  title        = {Financial Data for Futures Commission Merchants},
+  howpublished = {Monthly FCM financial reports. \url{https://www.cftc.gov/MarketReports/financialfcmdata/index.htm}},
+  note         = {Adjusted net capital by FCM: bank-affiliated FCMs \$5--20\,bn, non-bank FCMs \$50\,m--\$1\,bn. Accessed June 2026}
+}
+
+% --- close-out recovery / value of central clearing (corrected from 2023) ---
+@article{vuillemey_2020,
+  author  = {Vuillemey, Guillaume},
+  title   = {The Value of Central Clearing},
+  journal = {The Journal of Finance},
+  volume  = {75},
+  number  = {4},
+  pages   = {2021--2053},
+  year    = {2020},
+  doi     = {10.1111/jofi.12902}
+}
+% Commodity-broker bankruptcy and client porting (the modal client has no standing back-up agent).
+@misc{cftc_part190,
+  author       = {{Commodity Futures Trading Commission}},
+  title        = {Bankruptcy Regulations (Part 190)},
+  howpublished = {17 CFR Part 190; final rule, 86 Fed.\ Reg.\ (Apr.\ 13, 2021)},
+  year         = {2021},
+  note         = {\url{https://www.federalregister.gov/documents/2021/04/13/2020-28300/bankruptcy-regulations}}
+}
+
+% Member/client capital scale: per-FCM adjusted net capital and segregated funds.
+@misc{cftc_fcm,
+  author       = {{Commodity Futures Trading Commission}},
+  title        = {Financial Data for Futures Commission Merchants},
+  howpublished = {CFTC Market Participants Division; per-FCM adjusted net capital and customer segregated funds (Form 1-FR-FCM / FOCUS), updated monthly},
+  year         = {2024},
+  note         = {\url{https://www.cftc.gov/MarketReports/financialfcmdata/index.htm}}
+}
+
+% SITG, default-fund and client-IM-share metrics from CCP public quantitative disclosures.
+@misc{fia_tracker,
+  author       = {{Futures Industry Association}},
+  title        = {{CCP} Tracker},
+  howpublished = {FIA clearinghouse data resource; per-CCP initial margin, default fund, skin-in-the-game (QD 4.1.1/4.1.4) and client-share metrics},
+  year         = {2024},
+  note         = {\url{https://www.fia.org/resources/fia-releases-major-clearinghouse-data-initiative-ccp-tracker}}
+}
 
 % =====================================================================
 % 5. SELF-EXCITING / PAYMENT-DELAY  (Hawkes angle — DROPPED from the model;
