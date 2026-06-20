@@ -100,23 +100,109 @@ The estimate is averaged over several tail cut-offs for robustness. \\
 
 This combination of the KS statistic and Hill tail index is deliberate, using just the KS statistic makes tails very large and using just the Hill Tail index makes kurtosis unrealistically high. This is a deviation from \cite{gao_2022_hfabm} that use only the Hill tail index for their high-frequency LOB and \cite{gao_2022_xgb} that use only the KS statistic, and is motivated by the more granular step size alongside the importance of realistic tails due to the study of stressed periods.
 
-\paragraph{Weighting.} The five components live on different scales --- a dimensionless KS statistic,
-a standard deviation of order $10^{-4}$, autocorrelations, a tail index near three --- so the raw sum
-in \eqref{eq:cal-D} would be dominated by the largest-scale term. Following
-\citet{franke_westerhoff_2012}, each weight is the reciprocal of that component's own \emph{sampling}
-standard deviation,
+\paragraph{Weighting.} The five loss components are each of varying magnitudes. To make them of comparable scale, such that the largest scale term does not dominate, the components are weighed by the reciprocal of their sampling variability following the work of \cite{franke_westerhoff_2012}. Each weight is the reciprocal of the component's standard deviation,
 \begin{equation}
 \label{eq:cal-w}
 w_c = \frac{1}{s_c}, \qquad c \in \{\mathrm{KS},\,V,\,\mathrm{ACF1},\,\mathrm{ACF2},\,\mathrm{Hill}\},
 \end{equation}
-so every term in \eqref{eq:cal-D} is measured in units of sampling noise: an intrinsically noisy
-moment is down-weighted and a precisely-measured one counts for more. The $s_c$ come from a
-moving-block bootstrap of the empirical returns \citep{kunsch_1989} --- the series is resampled in
-day-long blocks (long enough to preserve the dependence the autocorrelations measure), the whole
-battery is recomputed on each resample, and $s_c$ is its standard deviation across resamples --- and
-are fixed once per regime, so the loss is stationary and comparable across evaluations.
-\citet{franke_westerhoff_2012} use the full inverse-covariance matrix and \citet{gao_2022_hfabm} the
-inverse \emph{variance} $1/s_c^2$; the latter is scale-pathological here (the minute return-SD's tiny
-sampling variance would swamp the sum), so the inverse standard deviation is the stable middle choice.
-A value of $D$ near one is, loosely, a one-standard-error miss per moment.
+such that each term is measured in the units of it's sample noise. This has the added benefit that down-weighting noisy moments such that the loss function offers higher weight to moments that are more consistently identified across the sample. 
+The $s_c$ come from a moving-block bootstrap of the empirical returns \citep{kunsch_1989}, day long blocks are taken as independent samples, and the moments are recomputed on each resample/block. For the multi-lag components $\mathrm{ACF1}$ and $\mathrm{ACF2}$ the reciprocal-SD
+standardisation is applied to each lag inside the average. \cite{franke_westerhoff_2012} made use of the full inverse-covariance matrix for weighting and \cite{gao_2022_hfabm} made use of inverse variance, as the former is near singular for these losses and for the latter the return standard deviation dominates due to low sampling variability, and hence the inverse of the standard deviation is employed. 
+
+
+\section{Calibration Methodology}
+\label{sec:cal-method}
+
+The ABM consists of several parameters that need calibration. Running a multi-day simulation over several random parameter sets to find an optimal set which minimises the loss function would be computationally very expensive. For this model, seven parameters need calibration across two different regimes. The paper therefore uses a surrogate modelling technique to lower this computational cost. The technique was  pioneered by \cite{lamperti_2018}, who train an XGBoost model to classify positive and negative calibrations to find an optimal set of parameters for an Agent Based Model. It was extended by \cite{gao_2022_xgb}, who train the XGBoost model to predict the loss function for a given set of parameter in place of running the simulator.
+
+\subsection{Surrogate Modelling}
+
+The surrogate model used for calibration is an XGBoost model, that is trained on the mapping from $\theta\mapsto D(\theta)$, from parameter vector to loss. Calibration follows the two stage approach of \cite{gao_2022_hfabm}, where the first stage is an estimation of an optimal set of parameters using the surrogate model approach of \cite{gao_2022_xgb}, and the second stage a grid search around those optimal parameters in a feasible bound. The model parameter values that minimise the stylised facts distance are then chosen. The following steps lay out the calibration methodology:
+\begin{enumerate}
+\item \textbf{Sampling.} A large pool of parameter combinations is drawn using Sobol Sampling, to ensure a uniform distribution across the multi-dimensional space of parameters. A random set of these parameters is then taken and the ABM simulation run on them to get a stylised facts distance as a label. This then gives us an initial training set of input parameter combinations and their corresponding stylised facts distances as labels.
+\item \textbf{Model Training.} An XGBoost regressor is trained on these $(\theta, D)$ pairs, to take parameter combinations as an input and predict stylised facts distance as an output.
+\item \textbf{Search and supplement.} The cheap emulator predicts the loss over a large unevaluated
+Sobol pool; the most promising vectors are then run on the true simulator and added to the training
+set. The selection of the training set combines a selection with the smallest predicted loss (exploitation), and a randomly drawn fraction (exploration) to avoid possible bias. 
+\item \textbf{Iterate (stage one).} A new XGBoost model is trained on this training set, and this cycle is repeated countless times until it returns the surrogate-optimal parameter vector.
+\item \textbf{Refine (stage two).} A tight grid search is then performed around a small range centred on the surrogate optimum, and the true simulator is used to evaluate this. The node with the lowest stylised facts distance is then taken as the calibrated set of parameters  $\theta^\star$. The located $\theta^\star$ is then validated on fresh seeds (\S\ref{sec:cal-validation}).
+\end{enumerate}
+
+The quality of the surrogate model is reported using its $R^2$, with a high $R^2$
+indicating that the surrogate emulated the model with high accuracy. The model had an $R^2$ of 0.90 for the calm regime and !!!! for the stressed regime. 
+
+
+\begin{table}[h]
+      \centering
+      \caption{Model parameters: status and values. The seven trading-agent behavioural parameters are
+      calibrated per regime; the optima (marked ---) are filled from the surrogate re-lock. The primary
+      specification takes $V_t$ to be the contemporaneous empirical one-minute mid (no free parameters);
+      the SV-MJD parameters below are measured from realized measures and govern the robustness arm only.
+      Structural quantities are fixed by design or contract.}
+      \label{tab:model-params}
+      \begin{tabular}{lllcc}
+      \hline
+      Parameter & Description & Status & Calm & Stressed \\
+      \hline
+      \multicolumn{5}{l}{\emph{Trading agents -- calibrated (seven per regime)}} \\
+      $c_f$          & FT belief-width scale       & Calibrated & --- & --- \\
+      $\alpha_{zi}$  & ZI limit-order rate         & Calibrated & --- & --- \\
+      $\mu_{zi}$     & ZI market-order rate        & Calibrated & --- & --- \\
+      $\delta_{zi}$  & ZI cancellation rate        & Calibrated & --- & --- \\
+      $p_d$          & geometric placement depth   & Calibrated & --- & --- \\
+      $\lambda$      & MT signal (EWMA) decay      & Calibrated & --- & --- \\
+      $\gamma_M$     & MT activation scale         & Calibrated & --- & --- \\
+      \hline
+      \multicolumn{5}{l}{\emph{Fundamental -- SV-MJD path (realized measures)}} \\
+      $\sigma_d$     & diffusion                   & Measured & $2.88\times10^{-4}$ & $1.80\times10^{-3}$ \\
+      $\lambda_J$    & jump intensity (per day)    & Measured & 1.93    & 0.97    \\
+      $\delta$       & jump-size std               & Measured & $1.12\times10^{-3}$ & $7.26\times10^{-3}$ \\
+      $\alpha$       & OU mean-reversion           & Measured & $5.7\times10^{-3}$  & $2.7\times10^{-3}$  \\
+      $\theta$       & OU long-run volatility      & Measured & $2.34\times10^{-4}$ & $1.48\times10^{-3}$ \\
+      $s$            & OU volatility-of-volatility & Measured & $1.49\times10^{-5}$ & $4.88\times10^{-5}$ \\
+      $\mu$          & drift                       & Measured & $1\times10^{-6}$ & $-6\times10^{-6}$ \\
+      \hline
+      \end{tabular}
+      \end{table}
+
+
+
+\section{Validation}
+\label{sec:cal-validation}
+
+This section presents the results of the financial market simulation, and the efficacy of the calibration. The Moment Coverage Ratio (MCR) of \cite{franke_westerhoff_2012} is used as a check, which checks how well each particular moment is matched, unlike the loss function which aggregates them. The MCR creates a 95\% confidence interval for each moment with boundaries ±1.96 times standard deviation around empirical value. The standard deviation is obtained by once again applying the block-bootstrap method on empirical data and getting a moment value for each block/sample, and taking it's standard deviation. The MCR is then the proportion of simulation runs for which the moment is contained in the confidence interval, an approach employed by \cite{gao_2022_hfabm}.
+
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{Moment coverage ratio (MCR) by moment.} Fraction of independent simulation runs whose
+moment falls inside the 95\% block-bootstrap confidence interval of the empirical moment.}
+\label{tab:cal-mcr}
+\begin{threeparttable}
+\begin{tabular}{lcc}
+\toprule
+Moment & Calm & Stressed \\
+\midrule
+Return SD            & 100\% & --- \\
+Hill tail index      & 92\%  & --- \\
+ACF $r(1)$           & 46\%  & --- \\
+ACF $r(5)$           & 100\% & --- \\
+ACF $r(10)$          & 100\% & --- \\
+ACF $r(20)$          & 100\% & --- \\
+ACF $|r|(1)$         & 98\%  & --- \\
+ACF $|r|(5)$         & 0\%   & --- \\
+ACF $|r|(10)$        & 0\%   & --- \\
+ACF $|r|(20)$        & 0\%   & --- \\
+\midrule
+Mean per-moment      & 63.6\% & --- \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]\footnotesize
+\item The fraction of independent runs whose moment lands in the 95\% empirical interval.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+For the calm regime, as can be seen, some moments are very accurately estimated. Long-horizon volatility clustering, however, appears to be structurally unreachable. We see weaker volatility clustering in the model than we see in empirical returns, and this is more prominent for the calm regime. For the stressed regime,  The Kolmogorov-Smirnov statistic is not included in the Moment Coverage Ratio as it has no empirical value or confidence interval to fall under. The distributional fit can be seen through the CDF of returns.
+
 
