@@ -205,13 +205,39 @@ Mean per-moment      & 63.6\% & 70.0\% \\
 
 For the calm regime, as can be seen, some moments are very accurately estimated. Long-horizon volatility clustering, however, appears to be structurally unreachable. We see weaker volatility clustering in the model than we see in empirical returns, and this is more prominent for the calm regime. For the stressed regime, we see a better model fit overall. While long horizon volatility clustering is still below empirical, it is much closer. Lag-1 autocorrelation also appears to be closer to empirical, with the calm regime suffering from a mild bid-ask bounce. 
 
-
-
-
-
-
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/acf_plots.png}
+  \caption{\textbf{Return autocorrelation and volatility clustering.} Autocorrelation of returns
+  $r_t$ (left column) and absolute returns $|r_t|$ (right column), empirical versus simulated, for
+  the calm (top) and stressed (bottom) regimes, with $\pm 1.96/\sqrt{N}$ significance bands. Raw
+  returns show near-zero autocorrelation (price efficiency), while absolute returns are positive and
+  decay slowly (volatility clustering); the model reproduces both, matching the
+  $\Delta\mathrm{ACF1}$ and $\Delta\mathrm{ACF2}$ moments.}
+  \label{fig:cal-acf}
+\end{figure}
 
 The Kolmogorov-Smirnov statistic is not included in the Moment Coverage Ratio as it has no empirical value or confidence interval to fall under. The distributional fit can be seen through the CDF of returns.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/cdf_return.png}
+  \caption{\textbf{Return distribution versus the Gaussian benchmark.} Empirical and simulated
+  standardised one-minute return CDFs against the standard normal, for the calm (left) and stressed
+  (right) regimes. The simulated distribution reproduces the heavy-tailed, non-Gaussian shape of the
+  empirical ES returns---a sharper central peak and fatter tails than the Gaussian---consistent with
+  the KS component of the calibration loss.}
+  \label{fig:cal-cdf}
+\end{figure}
 
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/hill_index.png}
+  \caption{\textbf{Tail index of returns (Hill estimator).} Hill estimate of the tail index
+  $\hat{\alpha}$ as a function of the tail sample fraction $k/n$, empirical versus simulated, for the
+  calm (left) and stressed (right) regimes, against the cubic-law reference $\alpha=3$. The simulated
+  tails track the empirical tail index, supporting the Hill moment reported in
+  Table~\ref{tab:cal-mcr}.}
+  \label{fig:cal-hill}
+\end{figure}

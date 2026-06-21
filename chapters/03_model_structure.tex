@@ -32,6 +32,7 @@ where $b_t$ and $a_t$ are the best bid and best ask at the end of step $t$. The 
 \label{sec:agents}
 
 The book is populated by 100 trading agents of three types - 40 fundamental traders (FT), 20 momentum traders (MT), and 40 noise traders/zero-intelligence traders (ZI). The ZIs serve as a constant source of liquidity to the book, the FTs keep asset price anchored to an exogenous fundamental signal, and the MTs amplify price movements and trade on trend. Ten of the FTs also serve as Bank Clearing Members (BCMs), and the remaining 30 and the ZI and MT traders serve as clients of other BCMs and Non-Bank Clearing Members (NBCMs). FTs and MTs place limit orders at each step, with new orders replacing old orders. ZIs place both limit and market orders, and order cancellations, leading to the presence of resting orders on the book. FTs place limit orders at a heterogeneous fundamental signal they observe, and MTs and ZIs place limit orders at a depth of $k$ steps from the previous mid, drawn from a geometric distribution $k \sim \mathrm{Geometric}(p_d)$, where $p_d$ can be fit to L2 order book or calibrated alongside other parameters. A log-normal depth was trialled, but stylised facts were more easily reproduced with a geometric depth of limit order placement.  Order sizes are drawn uniformly from $[1, 10]$ for each trader. Each model order unit represents a block of ES contracts — 18 in the calm regime, 32 in the stressed — chosen so that the simulated per-minute volume matches the empirical ES volume (≈2,000 and ≈3,500 contracts per minute).
+
 \subsubsection{Fundamental Trader}
 
 Fundamental traders trade based on the fundamental value of the stock. The fundamental value $V_t$ is fed as an exogenous signal. To introduce heterogeneity, each FT carries a fixed belief offset $z_i \sim \mathcal{N}(0,1)$ drawn at initialisation, so each FT carries its own private valuation. At each step, fundamental traders place a limit order at a reservation $R^{i}_t$ from the fundamental value (FV) signal:- 
@@ -146,7 +147,14 @@ The five NBCMs have a purely clearing function, they hold no proprietary positio
 
 \subsubsection{Clients}
 
-The client layer is an explicit extension on the work of \cite{deloitte_ccp}. Ninety clients - thirty fundamental traders, twenty momentum traders, and forty noise traders - clear through the NBCMs and the five BCMs that offer client clearing. Each client is connected to a single CM, a simplification in line with \cite{ofr_2026} who find that the modal client only has one clearing connection. Clients are assigned to CMs by a leverage-balanced rule, they are routed to members whose resulting client book to member capital ratio would be highest, so each clear member balance to client size ratio is similar. In simple terms, the larger clients clear through the largest CMs. Divisions are kept heterogenous. CMs hold between five and fifteen clients, with the larger members by capital and the NBCMs who make clearing their business holding larger books. The type of trader allotted is random between fundamental, momentum, and noise. The initial capital of these clients is assumed to be at a lower scale than the Banks -- fundamental clients are drawn from $U[\$0.5,\$3]$\,billion, momentum clients from $U[\$0=0.2,\$1]$\,billion, and noise (zero-intelligence) accounts from $U[\$200,\$500]$\,million. 
+The client layer is an explicit extension on the work of \cite{deloitte_ccp}. Ninety clients - thirty fundamental traders, twenty momentum traders, and forty noise traders - clear through the NBCMs and the five BCMs that offer client clearing. Each client is connected to a single CM, a simplification in line with \cite{ofr_2026} who find that the modal client only has one clearing connection.
+
+Clients are assigned to CMs by a capacity proportional rule, each client is routed to the CM whose resulting client book to capital ratio would be lowest. Leverage therefore ends up balanced 
+
+leverage-balanced rule, they are routed to members whose resulting client book to member capital ratio would be highest, so each clear member balance to client size ratio is similar. In simple terms, the larger clients clear through the largest CMs. Divisions are kept heterogenous. CMs hold between five and fifteen clients, with the larger members by capital and the NBCMs who make clearing their business holding larger books. 
+
+
+The type of trader allotted is random between fundamental, momentum, and noise. The initial capital of these clients is assumed to be at a lower scale than the Banks -- fundamental clients are drawn from $U[\$0.5,\$3]$\,billion, momentum clients from $U[\$0.2,\$1]$\,billion, and noise (zero-intelligence) accounts from $U[\$200,\$500]$\,million. 
 
 A client may take on a position upto its CMs house margin limit: set at a fixed 15\% of notional. This is a simplifying assumption to restrict large positions whose margin cannot be financed, based on realistic margin levels for client accounts. Each margin cycle, variation margin is covered through their cash and initial margin is placed to the CCP through the clearing member. Furthermore, a client is subject to the same 8\% capital ratio as the CMs, and freezes trading if it is below this level. If it cannot meet a margin call using its cash, a client has defaulted. On account of a client default, it's clearing member assumes its position and liquidates it over an Almgren-Chriss Schedule \citep{almgren_chriss_2000}, covering any residual shortfall over the clients' posted margins. 
 
@@ -163,18 +171,17 @@ Initial Margin (IM) is calculated based on a Clearing Member's gross exposure --
 
 \begin{equation}
 \label{eq:im}
-f_\tau = \max\!\bigl(6\%,\;\; \alpha_{99}\,\sigma^{\mathrm{daily}}_\tau\,\sqrt{\mathrm{MPOR}}\,\bigr),
-\qquad \alpha_{99} = 3.0,\quad \mathrm{MPOR} = 2\ \text{days},
+f_\tau =  \max\!\bigl(4\%,\; \alpha_{99}\,\sigma^{\mathrm{daily}}_\tau\,\sqrt{\mathrm{MPOR}}\bigr)\
+\qquad \alpha_{99} = 3.0,\quad \mathrm{MPOR} = 1\ \text{day},
 \qquad \mathrm{IM}_\tau = f_\tau \times \text{exposure}.
 \end{equation}
 
- $\sigma^{\mathrm{daily}}_\tau$ is the daily return volatility (an
-exponentially-weighted average of recent returns --- the RiskMetrics
-$\lambda\approx0.94$ convention); $\sqrt{\mathrm{MPOR}}$ scales that one-day move up to the two-day
-window, because volatility grows with the square root of time; and $\alpha_{99}=3.0$ is the
-$99\%$ quantile of E-mini S\&P~500 returns based on a Filtered Historical Simulation, as returns are not always normally distributed. The $6\%$ floor is the anti-procyclicality minimum (EMIR Art.~28): in quiet markets the
-raw VaR sits below it, so margin holds at $6\%$; in stress the VaR term takes over and the rate climbs
-with volatility (to $\sim$12--25\%).  A cleared client
+ $\sigma^{\mathrm{daily}}_\tau$ is the daily return volatility calculated as an
+exponentially-weighted average of recent daily returns --- the RiskMetrics
+$\lambda\approx0.94$ convention, using daily price data including a pre-window period so it is available on simulation day one. MPOR of 1 day aligns with the CME convention for ES Mini contracts; and $\alpha_{99}=3.0$ is the
+$99\%$ quantile of E-mini S\&P~500 returns based on a Filtered Historical Simulation, as returns are not always normally distributed. The $4\%$ floor is the anti-procyclicality minimum (EMIR Art.~28): in quiet markets the
+raw VaR sits below it, so margin holds at $4\%$; in stress the VaR term takes over and the rate climbs
+with volatility (to $\sim$11\%).  A cleared client
 posts its own initial margin: the CCP's call passes down through its clearing member, the client
 funds it from its own cash, and the member transfers it to the CCP.
 
