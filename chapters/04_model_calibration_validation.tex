@@ -9,7 +9,7 @@
 % %  to fill from output/relock/ (and output/relock_gbm/ for the SV-MJD robustness).
 % %==============================================================================
 
-This section presents the methodology for calibrating the agent based financial market simulation. As this serves as the first stage and base of the clearing layer, the market simulation should be well calibrated and able to reproduce the features of real market returns. A common method to do this, and the one adopted by this model, is the reproduction of the moments of empirical returns through the simulation. This chapter describes the data used, the parameters calibrated, the method of calibration and the calibration, and a validation of the calibrated parameters. The chosen moments are the stylised facts of returns we see empirically - the distribution of returns, heavy tails, absence of autocorrelation and volatility clustering. 
+This section presents the methodology for calibrating the agent based financial market simulation. As this serves as the first stage and base of the clearing layer, the market simulation should be well calibrated and able to reproduce the features of real market returns. A common method to do this, and the one adopted by this model, is the reproduction of the moments of empirical returns through the simulation. This chapter describes the data used, the parameters calibrated, the method of calibration and the calibration, and a validation of the calibrated parameters. The chosen moments are the stylised facts of returns we see empirically - the distribution of returns, heavy tails, absence of autocorrelation and volatility clustering. One point to mention is that the market simulation is calibrated in isolation, the freeze-out and liquidation mechanics of clearing have an impact on market prices and returns, but including the clearing layer in the calibration would be computationally prohibitive. 
 
 \section{Data and Regimes}
 
@@ -129,7 +129,7 @@ set. The selection of the training set combines a selection with the smallest pr
 \end{enumerate}
 
 The quality of the surrogate model is reported using its $R^2$, with a high $R^2$
-indicating that the surrogate emulated the model with high accuracy. The model had an $R^2$ of 0.90 for the calm regime and !!!! for the stressed regime. 
+indicating that the surrogate emulated the model with high accuracy. The model had an $R^2$ of 0.90 for the calm regime and 0.88 for the stressed regime. 
 
 
 \begin{table}[h]
@@ -145,13 +145,13 @@ indicating that the surrogate emulated the model with high accuracy. The model h
       Parameter & Description & Status & Calm & Stressed \\
       \hline
       \multicolumn{5}{l}{\emph{Trading agents -- calibrated (seven per regime)}} \\
-      $c_f$          & FT belief-width scale       & Calibrated & --- & --- \\
-      $\alpha_{zi}$  & ZI limit-order rate         & Calibrated & --- & --- \\
-      $\mu_{zi}$     & ZI market-order rate        & Calibrated & --- & --- \\
-      $\delta_{zi}$  & ZI cancellation rate        & Calibrated & --- & --- \\
-      $p_d$          & geometric placement depth   & Calibrated & --- & --- \\
-      $\lambda$      & MT signal (EWMA) decay      & Calibrated & --- & --- \\
-      $\gamma_M$     & MT activation scale         & Calibrated & --- & --- \\
+      $c_f$          & FT belief-width scale       & Calibrated & 0.64  & 0.45  \\
+      $\alpha_{zi}$  & ZI limit-order rate         & Calibrated & 0.54  & 0.36  \\
+      $\mu_{zi}$     & ZI market-order rate        & Calibrated & 0.016 & 0.144 \\
+      $\delta_{zi}$  & ZI cancellation rate        & Calibrated & 0.067 & 0.232 \\
+      $p_d$          & geometric placement depth   & Calibrated & 0.46  & 0.51  \\
+      $\lambda$      & MT signal (EWMA) decay      & Calibrated & 0.022 & 0.181 \\
+      $\gamma_M$     & MT activation scale         & Calibrated & 0.31  & 0.32  \\
       \hline
       \multicolumn{5}{l}{\emph{Fundamental -- SV-MJD path (realized measures)}} \\
       $\sigma_d$     & diffusion                   & Measured & $2.88\times10^{-4}$ & $1.80\times10^{-3}$ \\
@@ -183,18 +183,18 @@ moment falls inside the 95\% block-bootstrap confidence interval of the empirica
 \toprule
 Moment & Calm & Stressed \\
 \midrule
-Return SD            & 100\% & --- \\
-Hill tail index      & 92\%  & --- \\
-ACF $r(1)$           & 46\%  & --- \\
-ACF $r(5)$           & 100\% & --- \\
-ACF $r(10)$          & 100\% & --- \\
-ACF $r(20)$          & 100\% & --- \\
-ACF $|r|(1)$         & 98\%  & --- \\
-ACF $|r|(5)$         & 0\%   & --- \\
-ACF $|r|(10)$        & 0\%   & --- \\
-ACF $|r|(20)$        & 0\%   & --- \\
+Return SD            & 100\% & 100\% \\
+Hill tail index      & 92\%  & 100\% \\
+ACF $r(1)$           & 46\%  & 88\%  \\
+ACF $r(5)$           & 100\% & 88\%  \\
+ACF $r(10)$          & 100\% & 90\%  \\
+ACF $r(20)$          & 100\% & 100\% \\
+ACF $|r|(1)$         & 98\%  & 76\%  \\
+ACF $|r|(5)$         & 0\%   & 22\%  \\
+ACF $|r|(10)$        & 0\%   & 34\%  \\
+ACF $|r|(20)$        & 0\%   & 2\%   \\
 \midrule
-Mean per-moment      & 63.6\% & --- \\
+Mean per-moment      & 63.6\% & 70.0\% \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}[flushleft]\footnotesize
@@ -203,6 +203,15 @@ Mean per-moment      & 63.6\% & --- \\
 \end{threeparttable}
 \end{table}
 
-For the calm regime, as can be seen, some moments are very accurately estimated. Long-horizon volatility clustering, however, appears to be structurally unreachable. We see weaker volatility clustering in the model than we see in empirical returns, and this is more prominent for the calm regime. For the stressed regime,  The Kolmogorov-Smirnov statistic is not included in the Moment Coverage Ratio as it has no empirical value or confidence interval to fall under. The distributional fit can be seen through the CDF of returns.
+For the calm regime, as can be seen, some moments are very accurately estimated. Long-horizon volatility clustering, however, appears to be structurally unreachable. We see weaker volatility clustering in the model than we see in empirical returns, and this is more prominent for the calm regime. For the stressed regime, we see a better model fit overall. While long horizon volatility clustering is still below empirical, it is much closer. Lag-1 autocorrelation also appears to be closer to empirical, with the calm regime suffering from a mild bid-ask bounce. 
+
+
+
+
+
+
+
+The Kolmogorov-Smirnov statistic is not included in the Moment Coverage Ratio as it has no empirical value or confidence interval to fall under. The distributional fit can be seen through the CDF of returns.
+
 
 

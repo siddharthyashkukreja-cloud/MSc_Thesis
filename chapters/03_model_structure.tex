@@ -52,9 +52,13 @@ average of mid-price log-returns,
 \begin{equation}
   M_t = (1-\lambda)\,M_{t-1} + \lambda\,\big(\log P_{t-1} - \log P_{t-2}\big),
 \end{equation}
-buying when the momentum signal $M_t > 0$ and selling when $M_t < 0$ - placing a limit order on that side at a geometric depth $k \sim \mathrm{Geometric}(p_d)$ from the last mid. Momentum traders amplify trends and contribute to short-horizon volatility clustering. The signal decay $\lambda = 0.05$ is shared across momentum traders and held fixed rather
-than calibrated, following \cite{majewski_2018}.
-It corresponds to a half-life of about 13.5 minutes, and allowing it to be calibrated did not improve the model. 
+buying when the momentum signal $M_t > 0$ and selling when $M_t < 0$ - placing a limit order on that side at a geometric depth $k \sim \mathrm{Geometric}(p_d)$ from the last mid. $\lambda$ dictates the time horizon of trend, and is calibrated per regime rather than
+fixed. An MT does not trade every step: at each step it activates with probability
+$\tanh\!\big(|M_t| / (\gamma_M\,\sigma_v)\big)$, so the share of momentum traders
+that act rises with the strength of the prevailing trend, and the activation scale
+$\gamma_M$ is calibrated alongside $\lambda$. In simple terms, the stronger the the recent move relative to normal one-minute volatility, the larger the fraction of momentum traders that put in an order.
+
+
 
 \subsubsection{Noise Trader}
 
@@ -144,7 +148,7 @@ The five NBCMs have a purely clearing function, they hold no proprietary positio
 
 The client layer is an explicit extension on the work of \cite{deloitte_ccp}. Ninety clients - thirty fundamental traders, twenty momentum traders, and forty noise traders - clear through the NBCMs and the five BCMs that offer client clearing. Each client is connected to a single CM, a simplification in line with \cite{ofr_2026} who find that the modal client only has one clearing connection. Clients are assigned to CMs by a leverage-balanced rule, they are routed to members whose resulting client book to member capital ratio would be highest, so each clear member balance to client size ratio is similar. In simple terms, the larger clients clear through the largest CMs. Divisions are kept heterogenous. CMs hold between five and fifteen clients, with the larger members by capital and the NBCMs who make clearing their business holding larger books. The type of trader allotted is random between fundamental, momentum, and noise. The initial capital of these clients is assumed to be at a lower scale than the Banks -- fundamental clients are drawn from $U[\$0.5,\$3]$\,billion, momentum clients from $U[\$0=0.2,\$1]$\,billion, and noise (zero-intelligence) accounts from $U[\$200,\$500]$\,million. 
 
-A client may take on a position upto its CMs house margin: set at a fixed 15\% of notional This is based on CFTC and SEC minimum customer margin levels for futures products, and is a simplifying assumption to restrict large positions whose margin cannot be financed. Each margin cycle, variation margin is covered through their cash and initial margin is placed to the CCP through the clearing member. Furthermore, a client is subject to the same 8\% capital ratio as the CMs, and freezes trading if it is below this level. If it cannot meet a margin call using its cash, a client has defaulted. On account of a client default, it's clearing member assumes its position and liquidates it over an Almgren-Chriss Schedule \citep{almgren_chriss_2000}, covering any residual shortfall over the clients' posted margins. 
+A client may take on a position upto its CMs house margin limit: set at a fixed 15\% of notional. This is a simplifying assumption to restrict large positions whose margin cannot be financed, based on realistic margin levels for client accounts. Each margin cycle, variation margin is covered through their cash and initial margin is placed to the CCP through the clearing member. Furthermore, a client is subject to the same 8\% capital ratio as the CMs, and freezes trading if it is below this level. If it cannot meet a margin call using its cash, a client has defaulted. On account of a client default, it's clearing member assumes its position and liquidates it over an Almgren-Chriss Schedule \citep{almgren_chriss_2000}, covering any residual shortfall over the clients' posted margins. 
 
 
 %------------------------------------------------------------------------------
@@ -179,7 +183,8 @@ IM is recalculated every hour, and and is called in alongside the Variation Marg
 
 \subsubsection{Liquidation and Porting}
 
-A default is resolved differently by both layers. For a client default, it's CM assumes its position and liquidates it on the open market, following an Almgren-Chriss schedule to limit price impact. The default of a Clearing Member is resolved by the CCP, it covers losses first through the defaulters Initial Margin and transfers its position to the member with the largest opposing position at a recovery rate of 0.80. This is a simplified representation of the auction a CCP does with remaining members, and is meant to limit losses through the fire sales of large positions. The Almgren-Chriss schedule also differs in the stressed and calm period, front loading more aggressively in stressed due to higher volatility, and does not get exercised in calm periods due to a lack of defaults.
+A default is resolved differently by both layers. For a client default, it's CM assumes its position and liquidates it on the open market, following an Almgren-Chriss schedule to limit price impact. The default of a Clearing Member is resolved by the CCP, it covers losses first through the defaulters Initial Margin and transfers its position to the member with the largest opposing position at a recovery rate of 0.80. This is a simplified representation of the auction a CCP does with remaining members, and is meant to limit losses through the fire sales of large positions. The Almgren-Chriss schedule also differs in the stressed and calm period, front loading more aggressively in stressed due to higher volatility, and with near uniform (TWAP) liquidation in calm periods -- although here it rarely gets exercised. The impact coefficients are calibrated per regime from 1-min price and volume data, the temporary impact coefficient from a regression of $|r|$ on traded volume and the permanent coefficient from a regression of forward cumulative returns on signed volume, and the optimum liquidation urgency is derived using these parameters and a risk aversion parameter shared across regimes \citep{almgren_chriss_2000}. Permanent impact is is empirically negative (prices revert beyond the trade), so the permanent impact is floored at zero and the market is treated as transient-impact
+dominated at the one-minute horizon \citep{bouchaud_gefen_potters_wyart_2004}.
 
 On a member default the CCP first tries to port the defaulter's surviving clients to other
 client-clearing members that retain leverage-ratio headroom after taking them on.
