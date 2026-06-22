@@ -13,8 +13,7 @@ Output is shown across both a calm and stressed regime. Across both regimes, the
   \centering
   \includegraphics[width=\textwidth]{Figures/E_fv_vs_mid.png}
   \caption{\textbf{Fundamental versus simulated mid (full model).} The empirical fundamental $V_t$ and the
-  simulated mid with the clearing tier active, calm and stressed regimes. The model tracks the real
-  trajectory and adds endogenous microstructure.}
+  simulated mid with the clearing tier active, calm and stressed regimes.}
   \label{fig:res-fv}
 \end{figure}
 
@@ -34,10 +33,7 @@ The clearing members operate with CAR constraint of a minimum of 8\%. BCMs that 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{Figures/B_capital_ratio.png}
-  \caption{\textbf{Clearing-member capital ratio $\kappa$ --- individual members (representative seed),
-  zoomed to the floor zone.} Client-clearing bank members hug the $8\%$ floor and deleverage toward the
-  $10\%$ restore line through the crash; non-bank members sit just above; the resilient house-only banks
-  ($\kappa\approx50\%$) run off the top of the panel. The leverage cycle fires without any member default.}
+  \caption{\textbf{Clearing-member capital ratio $\kappa$ --- individual members (representative seed)}}
   \label{fig:res-kappa}
 \end{figure}
 
@@ -51,8 +47,7 @@ In calm periods, the IM stays at it's anti-procyclicality floor of 4\%. Due to t
   \centering
   \includegraphics[width=\textwidth]{Figures/C_im_path.png}
   \caption{\textbf{Initial margin --- dollar path and procyclical fraction.} Posted IM (left axis, median
-  $+$ IQR) and the charged IM fraction (right axis): flat at the $4\%$ floor in calm, ramping
-  $4\%\!\to\!11.4\%$ ($2.84\times$) through the stressed window.}
+  $+$ IQR) and the charged IM fraction (right axis): flat at the $4\%$ floor in calm}
   \label{fig:res-im}
 \end{figure}
 
@@ -72,9 +67,7 @@ Looking at the margin calls, we see that they have a tendency to cluster. Both t
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{Figures/F_margin_call_clustering.png}
-  \caption{\textbf{Margin-call clustering.} Margin calls per hour over the window --- median (line) and
-  cross-seed IQR (band) over the $40$ seeds, calm (top) versus stressed (bottom). Calls cluster into
-  recurrent bursts; stressed runs hotter (mean $3.1$ vs $1.3$ calls/hour) and spikes higher.}
+  \caption{\textbf{Margin-call clustering.} Margin calls per hour over the window, calm (top) versus stressed (bottom).}
   \label{fig:res-mc}
 \end{figure}
 
@@ -89,11 +82,7 @@ ramps $4\%\!\to\!11.4\%$ ($2.84\times$) into the crash (Figure~\ref{fig:res-im})
 \begin{table}[H]
 \centering\small
 \caption{\textbf{H1 --- margin regimes (stressed, 12 seeds).} Client defaults mean (sd); other columns mean
-across seeds; IM in \$B; run under the ODD fixed default fund ($\approx\$12$--$14$B across arms) so the
-mutualised layer is comparable. The \emph{flat ladder} reads the trade-off top-to-bottom: as the standing
-margin rises, cost rises and client defaults fall, but loss climbs the waterfall (member defaults and
-mutualisation rise). \emph{Reactive} (set off below) holds the flat-$4\%$ standing cost yet lands below
-flat-$8\%$ on every risk metric --- its cost is the stress-time \emph{peak}.}
+across seeds; IM in \$B.}
 \label{tab:res-h1}
 \begin{tabular}{l cc c cc}
 \toprule
@@ -115,11 +104,7 @@ The central finding is that flat margin requirements do not remove default risk,
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{Figures/H1_margin.png}
-  \caption{\textbf{H1 --- the margin trade-off.} Each panel is one outcome across the margin regimes; the
-  flat ladder (light to dark) is monotonic and reactive is set off (after the dashed line) and highlighted.
-  Raising the flat margin protects clients (client defaults fall, left) but pushes loss up the waterfall
-  (mutualisation rises, centre) at rising standing cost (right). Reactive protects as cheaply as flat-$4\%$
-  in calm yet lands below flat-$8\%$ on both risk metrics, paying only a stress-time peak (dark bar, right).}
+  \caption{\textbf{H1 --- the margin trade-off.} Each panel reports a different outcome across the margin regimes.}
   \label{fig:res-h1}
 \end{figure}
 
