@@ -13,7 +13,7 @@ This section presents the methodology for calibrating the agent based financial 
 
 \section{Data and Regimes}
 
-The dataset used for calibration is the E-mini S\&P futures at a one minute frequency, matching the model time steps. There are two separate regimes, a calm regime and a stressed regime. The calm regime spans the a calm stretch in late 2019, and the stressed regime includes data from the early Covid-19 window, which was referred to as the most significant test of the resilience of financial markets since the GFC \citep{bcbs_cpmi_iosco_2022}. Parameters are calibrated separately on both regimes, as they differ substantially in volatility, microstructure and return distribution. Returns are intraday log-returns of the mid price, and some summary statistics are reported in \ref{tab:cal-data}.
+The dataset used for calibration is the E-mini S\&P futures at a one minute frequency, matching the model time steps. There are two separate regimes, a calm regime and a stressed regime. The calm regime spans a calm stretch in late 2019, and the stressed regime includes data from the early COVID-19 window, which was referred to as the most significant test of the resilience of financial markets since the GFC \citep{bcbs_cpmi_iosco_2022}. Parameters are calibrated separately on both regimes, as they differ substantially in volatility, microstructure and return distribution. Returns are intraday log-returns of the mid price, and some summary statistics are reported in \ref{tab:cal-data}.
 
 \begin{table}[h] 
 \centering
@@ -84,12 +84,12 @@ autocorrelation, so lags $\{1,2,3,\,5,6,7,\,10,11,12,\,20,21,22\}$ enter the fun
 component penalises predictability such as a bid-ask bounce.
 
 
-\paragraph{Volatility clustering ($\Delta\mathrm{ACF2}$).} In empirical data, we see that volatility clusters over time, large returns are followed by large returns and low returns by low returns. This can be measure by studying the autocorrelation of absolute or squared returns. Autocorrelations of absolute returns are positive and decay slowly. $\Delta\mathrm{ACF2}$ is the same distance with the autocorrelations $\mathrm{ACF}(\ell,|r|)$
+\paragraph{Volatility clustering ($\Delta\mathrm{ACF2}$).} In empirical data, we see that volatility clusters over time, large returns are followed by large returns and low returns by low returns. This can be measured by studying the autocorrelation of absolute or squared returns. Autocorrelations of absolute returns are positive and decay slowly. $\Delta\mathrm{ACF2}$ is the same distance with the autocorrelations $\mathrm{ACF}(\ell,|r|)$
 taken on $|r|$ (same lags, same three-lag smoothing),
 \begin{equation}
 \Delta\mathrm{ACF2} = \frac{\sum_{\ell\in L}\big|\,\mathrm{ACF}_{sim}(\ell,|r|)-\mathrm{ACF}_{emp}(\ell,|r|)\,\big|}{|L|}.
 \end{equation}
-For the dataset, squared returns were dominated by extreme values making their autocorrelation noisy, and hence absolute returns are used
+For the dataset, squared returns were dominated by extreme values making their autocorrelation noisy, and hence absolute returns are used.
 
 \paragraph{Heavy Tails (Hill).} Tail heaviness is measured by the \citet{hill_1975} estimator of the
 tail index of absolute returns, $\mathrm{Hill}$ (a lower value means a fatter tail), and its absolute difference is taken,
@@ -105,7 +105,7 @@ This combination of the KS statistic and Hill tail index is deliberate, using ju
 \label{eq:cal-w}
 w_c = \frac{1}{s_c}, \qquad c \in \{\mathrm{KS},\,V,\,\mathrm{ACF1},\,\mathrm{ACF2},\,\mathrm{Hill}\},
 \end{equation}
-such that each term is measured in the units of it's sample noise. This has the added benefit that down-weighting noisy moments such that the loss function offers higher weight to moments that are more consistently identified across the sample. 
+such that each term is measured in the units of its sample noise. This has the added benefit that down-weighting noisy moments such that the loss function offers higher weight to moments that are more consistently identified across the sample. 
 The $s_c$ come from a moving-block bootstrap of the empirical returns \citep{kunsch_1989}, day long blocks are taken as independent samples, and the moments are recomputed on each resample/block. For the multi-lag components $\mathrm{ACF1}$ and $\mathrm{ACF2}$ the reciprocal-SD
 standardisation is applied to each lag inside the average. \cite{franke_westerhoff_2012} made use of the full inverse-covariance matrix for weighting and \cite{gao_2022_hfabm} made use of inverse variance, as the former is near singular for these losses and for the latter the return standard deviation dominates due to low sampling variability, and hence the inverse of the standard deviation is employed. 
 
@@ -167,7 +167,7 @@ indicating that the surrogate emulated the model with high accuracy. The model h
 \section{Validation}
 \label{sec:cal-validation}
 
-This section presents the results of the financial market simulation, and the efficacy of the calibration. The Moment Coverage Ratio (MCR) of \cite{franke_westerhoff_2012} is used as a check, which checks how well each particular moment is matched, unlike the loss function which aggregates them. The MCR creates a 95\% confidence interval for each moment with boundaries ±1.96 times standard deviation around empirical value. The standard deviation is obtained by once again applying the block-bootstrap method on empirical data and getting a moment value for each block/sample, and taking it's standard deviation. The MCR is then the proportion of simulation runs for which the moment is contained in the confidence interval, an approach employed by \cite{gao_2022_hfabm}.
+This section presents the results of the financial market simulation, and the efficacy of the calibration. The Moment Coverage Ratio (MCR) of \cite{franke_westerhoff_2012} is used as a check, which checks how well each particular moment is matched, unlike the loss function which aggregates them. The MCR creates a 95\% confidence interval for each moment with boundaries ±1.96 times standard deviation around empirical value. The standard deviation is obtained by once again applying the block-bootstrap method on empirical data and getting a moment value for each block/sample, and taking its standard deviation. The MCR is then the proportion of simulation runs for which the moment is contained in the confidence interval, an approach employed by \cite{gao_2022_hfabm}.
 
 \begin{table}[h]
 \centering

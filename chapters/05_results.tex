@@ -28,7 +28,7 @@ Compared to the calm regime, we see higher traded volumes in the stressed period
 
 \subsection{Capital Adequacy Ratios and Breaches}
 
-The clearing members operate with CAR constraint of a minimum of 8\%. BCMs that carry clients operate close to this floor. In the stressed period, they also breach the CAR ratio and must subsequently deleverage, with about 3.1 of the 5 breaching in a typical stressed seed. The five proprietary BCMs stay well above the floor. The NBCMs display heterogenous behaviour, 2 of the five generally breach in a stressed seed but with no way to deleverage, roughly 0.15 of the 5 default per seed. 
+The clearing members operate with CAR constraint of a minimum of 8\%. BCMs that carry clients operate close to this floor. In the stressed period, they also breach the CAR ratio and must subsequently deleverage, with about 3.1 of the 5 breaching in a typical stressed seed. The five proprietary BCMs stay well above the floor. The NBCMs display heterogeneous behaviour, 2 of the five generally breach in a stressed seed but with no way to deleverage, roughly 0.15 of the 5 default per seed. 
 
 \begin{figure}[H]
   \centering
@@ -41,7 +41,7 @@ Each stressed seed produces ≈8.3 client defaults (range 2–18; none in calm);
 
 \subsection{Margin Cycle}
 
-In calm periods, the IM stays at it's anti-procyclicality floor of 4\%. Due to the low volatility and stable client trading, posted IM sees little variation. In stressed conditions, it starts at the 4\% floor and reaches a peak of 11.4\%, averaging 7.7\% across the window. 
+In calm periods, the IM stays at its anti-procyclicality floor of 4\%. Due to the low volatility and stable client trading, posted IM sees little variation. In stressed conditions, it starts at the 4\% floor and reaches a peak of 11.4\%, averaging 7.7\% across the window. 
 
 \begin{figure}[H]
   \centering
@@ -51,7 +51,7 @@ In calm periods, the IM stays at it's anti-procyclicality floor of 4\%. Due to t
   \label{fig:res-im}
 \end{figure}
 
-The majority of posted margin is from the client, 57\% in the stressed window and 60\% in the calm window. The lower share in the stressed window is due to the trading freezes that effect clients, lowering their trade volume whereas that of proprietary BCMs remains stable. 
+The majority of posted margin is from the client, 57\% in the stressed window and 60\% in the calm window. The lower share in the stressed window is due to the trading freezes that affect clients, lowering their trade volume whereas that of proprietary BCMs remains stable. 
 
 
 \begin{figure}[H]
@@ -75,8 +75,8 @@ Looking at the margin calls, we see that they have a tendency to cluster. Both t
 
 The model is applied to answer the single hypothesis of this thesis -- the procyclicality of margin calls. Risk and volatility sensitive margining practices are procyclical in nature: margins are low in calm markets and rise in stressed markets, demanding more collateral in the exact situation when it is hard to raise. This experiment switches the reactive volatility based IM for a flat IM across all regimes. This flat IM keeps it constant, and may include asking for an unnecessarily high buffer during calm times, and in return diminishing the need for procyclical margin calls. Three levels of margin are tested - a low level at 4\%, a level resembling the average stressed IM at 8\%, and a level covering the peak stressed IM at 12\%. There are many assets that already have IM requirements higher than 10\%, while ES futures tend to have low IM requirements due to their high liquidity. 
 
-To test this hypothesis, the default fund (DF) had to be substituted. As the SLOIM default fund adjust for IM, it shrank to zero for the high flat IMs that exceeded the extreme stress moves. A simple DF is used across both flat and reactive IMs, sized at a 10\% loss of the 2 largest member's positions. This leads to a DF size of $\approx\$12$--$14$B, similar to CME Clear levels. As previously mentioned, for reactive IM, the charged fraction
-ramps $4\%\!\to\!11.4\%$ ($2.84\times$) into the crash (Figure~\ref{fig:res-im})
+To test this hypothesis, the default fund (DF) had to be substituted. As the SLOIM default fund adjusts for IM, it shrank to zero for the high flat IMs that exceeded the extreme stress moves. A simple DF is used across both flat and reactive IMs, sized at a 10\% loss of the 2 largest members' positions. This leads to a DF size of $\approx\$12$--$14$B, similar to CME Clear levels. As previously mentioned, for reactive IM, the charged fraction
+ramps $4\%\!\to\!11.4\%$ ($2.84\times$) into the crash (Figure~\ref{fig:res-im}).
 
 
 \begin{table}[H]
