@@ -1,0 +1,129 @@
+This chapter presents the standard and calibrated model across both regimes. The historical mid-price is used as a proxy for the fundamental values, as mentioned in \ref{sec:fundamental}, but this can easily be replaced with a synthetic series. A calibrated model that reproduces stylised facts in the market layer, and offers a realistic model for CCP and client clearing in the clearing layer is in itself a major contribution. To demonstrate a possible use for the model, the ABM is used to study the procyclicality of margin calls. Finally, the synthetic-path extension is presented that allows for the model to be simulated under independent stochastic fundamental value paths to stress test CCP resilience, with the freedom to study the effects of changes in various parameters and CCP design elements. (Disclaimer: This final part will be added for the final version, late
+changes rendered the computation for this to be impossible to do in time, but it was verified
+that the synthetic series was adequate in reproducing stylised facts and interacted smoothly with
+the clearing layer)
+
+\section{The Client-Clearing ABM}
+
+This section presents the two-tier ABM for client clearing. It combines a calibrated LOB with realistic clearing practices and a CCP default waterfall. The descriptive figures illustrate the price generation, order flow, margin cycles and capital adequacies across the model.
+
+Output is shown across both a calm and stressed regime. Across both regimes, the simulated mid closely tracks the Fundamental Value of the asset (Fig \ref{fig:res-fv}). 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/E_fv_vs_mid.png}
+  \caption{\textbf{Fundamental versus simulated mid (full model).} The empirical fundamental $V_t$ and the
+  simulated mid with the clearing tier active, calm and stressed regimes. The model tracks the real
+  trajectory and adds endogenous microstructure.}
+  \label{fig:res-fv}
+\end{figure}
+
+Compared to the calm regime, we see higher traded volumes in the stressed period. We also see a skew towards selling during the stressed market, with a thinning buy side order book depth (Fig \ref{fig:res-flow}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/A_order_flow.png}
+  \caption{\textbf{LOB Depth.} Buy- versus sell-side order book depth.}
+  \label{fig:res-flow}
+\end{figure}
+
+\subsection{Capital Adequacy Ratios and Breaches}
+
+The clearing members operate with CAR constraint of a minimum of 8\%. BCMs that carry clients operate close to this floor. In the stressed period, they also breach the CAR ratio and must subsequently deleverage, with about 3.1 of the 5 breaching in a typical stressed seed. The five proprietary BCMs stay well above the floor. The NBCMs display heterogenous behaviour, 2 of the five generally breach in a stressed seed but with no way to deleverage, roughly 0.15 of the 5 default per seed. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/B_capital_ratio.png}
+  \caption{\textbf{Clearing-member capital ratio $\kappa$ --- individual members (representative seed),
+  zoomed to the floor zone.} Client-clearing bank members hug the $8\%$ floor and deleverage toward the
+  $10\%$ restore line through the crash; non-bank members sit just above; the resilient house-only banks
+  ($\kappa\approx50\%$) run off the top of the panel. The leverage cycle fires without any member default.}
+  \label{fig:res-kappa}
+\end{figure}
+
+Each stressed seed produces ≈8.3 client defaults (range 2–18; none in calm); on default the client's posted initial margin is seized first and the carrying member absorbs the residual variation-margin shortfall and close-out loss against its own capital, closing out the position — so with no member failure the loss is contained at the member and never reaches the mutualised default fund.
+
+\subsection{Margin Cycle}
+
+In calm periods, the IM stays at it's anti-procyclicality floor of 4\%. Due to the low volatility and stable client trading, posted IM sees little variation. In stressed conditions, it starts at the 4\% floor and reaches a peak of 11.4\%, averaging 7.7\% across the window. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/C_im_path.png}
+  \caption{\textbf{Initial margin --- dollar path and procyclical fraction.} Posted IM (left axis, median
+  $+$ IQR) and the charged IM fraction (right axis): flat at the $4\%$ floor in calm, ramping
+  $4\%\!\to\!11.4\%$ ($2.84\times$) through the stressed window.}
+  \label{fig:res-im}
+\end{figure}
+
+The majority of posted margin is from the client, 57\% in the stressed window and 60\% in the calm window. The lower share in the stressed window is due to the trading freezes that effect clients, lowering their trade volume whereas that of proprietary BCMs remains stable. 
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/D_im_by_type.png}
+  \caption{\textbf{Posted initial margin by participant type.} Fundamental, momentum and noise clients
+  versus banking-member house margin; clients post $\approx 57\%$ of the total under stress.}
+  \label{fig:res-imtype}
+\end{figure}
+
+Looking at the margin calls, we see that they have a tendency to cluster. Both the baseline intensity and bursts are amplified during stress. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/F_margin_call_clustering.png}
+  \caption{\textbf{Margin-call clustering.} Margin calls per hour over the window --- median (line) and
+  cross-seed IQR (band) over the $40$ seeds, calm (top) versus stressed (bottom). Calls cluster into
+  recurrent bursts; stressed runs hotter (mean $3.1$ vs $1.3$ calls/hour) and spikes higher.}
+  \label{fig:res-mc}
+\end{figure}
+
+\section{Margin Procyclicality}
+
+The model is applied to answer the single hypothesis of this thesis -- the procyclicality of margin calls. Risk and volatility sensitive margining practices are procyclical in nature: margins are low in calm markets and rise in stressed markets, demanding more collateral in the exact situation when it is hard to raise. This experiment switches the reactive volatility based IM for a flat IM across all regimes. This flat IM keeps it constant, and may include asking for an unnecessarily high buffer during calm times, and in return diminishing the need for procyclical margin calls. Three levels of margin are tested - a low level at 4\%, a level resembling the average stressed IM at 8\%, and a level covering the peak stressed IM at 12\%. There are many assets that already have IM requirements higher than 10\%, while ES futures tend to have low IM requirements due to their high liquidity. 
+
+To test this hypothesis, the default fund (DF) had to be substituted. As the SLOIM default fund adjust for IM, it shrank to zero for the high flat IMs that exceeded the extreme stress moves. A simple DF is used across both flat and reactive IMs, sized at a 10\% loss of the 2 largest member's positions. This leads to a DF size of $\approx\$12$--$14$B, similar to CME Clear levels. As previously mentioned, for reactive IM, the charged fraction
+ramps $4\%\!\to\!11.4\%$ ($2.84\times$) into the crash (Figure~\ref{fig:res-im})
+
+
+\begin{table}[H]
+\centering\small
+\caption{\textbf{H1 --- margin regimes (stressed, 12 seeds).} Client defaults mean (sd); other columns mean
+across seeds; IM in \$B; run under the ODD fixed default fund ($\approx\$12$--$14$B across arms) so the
+mutualised layer is comparable. The \emph{flat ladder} reads the trade-off top-to-bottom: as the standing
+margin rises, cost rises and client defaults fall, but loss climbs the waterfall (member defaults and
+mutualisation rise). \emph{Reactive} (set off below) holds the flat-$4\%$ standing cost yet lands below
+flat-$8\%$ on every risk metric --- its cost is the stress-time \emph{peak}.}
+\label{tab:res-h1}
+\begin{tabular}{l cc c cc}
+\toprule
+ & \multicolumn{2}{c}{Cost (\$B)} & Clients & \multicolumn{2}{c}{Loss up the waterfall} \\
+\cmidrule(lr){2-3}\cmidrule(lr){5-6}
+Margin regime & calm & peak & client def. & member def. & reach fund \\
+\midrule
+Flat $4\%$    & $15.9$ & $16.0$ & $14.3\ (2.8)$ & $0.00$ & $0\%$  \\
+Flat $8\%$    & $27.7$ & $29.6$ & $11.8\ (4.5)$ & $0.33$ & $33\%$ \\
+Flat $12\%$   & $37.7$ & $41.2$ & $\phantom{0}5.6\ (5.1)$ & $0.75$ & $58\%$ \\
+\midrule
+Reactive ($4\!\to\!11.4\%$) & $15.9$ & $36.1$ & $10.2\ (4.2)$ & $0.17$ & $17\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The central finding is that flat margin requirements do not remove default risk, but instead relocate it. As flat IM increases, client defaults fall as with more margin, less of client cash is exhausted. At the same time, member defaults rise to an average of 0.75 per seed. The mutualised default fund is subsequently reached in a high proportion of seeds. The high margins drain the cash balances needed by the Clearing Members to absorb client defaults. Higher margins therefore lower client defaults, but at same time increase the likelihood of systemic and CM failure. The reactive IM, conversely, offers lower client and member defaults than the flat 8\% IM. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/H1_margin.png}
+  \caption{\textbf{H1 --- the margin trade-off.} Each panel is one outcome across the margin regimes; the
+  flat ladder (light to dark) is monotonic and reactive is set off (after the dashed line) and highlighted.
+  Raising the flat margin protects clients (client defaults fall, left) but pushes loss up the waterfall
+  (mutualisation rises, centre) at rising standing cost (right). Reactive protects as cheaply as flat-$4\%$
+  in calm yet lands below flat-$8\%$ on both risk metrics, paying only a stress-time peak (dark bar, right).}
+  \label{fig:res-h1}
+\end{figure}
+
+
+\section{Simulated Fundamental Value}
+
+(to be added)

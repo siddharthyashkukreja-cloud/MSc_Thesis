@@ -9,17 +9,10 @@ The shift towards central clearing has brought with it countless studies evaluat
 
 This paper proposes an Agent-Based Model (ABM) to explore the role and effect of client clearing on CCP systemic risk. An ABM offers the ability to recreate the complex and reactive behaviours of market participants and central clearing, and can do so without the need for a proprietary clearing dataset. The ABM is built upon a financial market simulation calibrated to reproduce the stylised facts of returns we see in the market. The traders in this financial market simulation consist of the Bank Clearing Members and clients which are then connected to a tiered CCP environment, with a framework for margin calls from market participants and realistic CCP default management. \\
 
-\noindent This work therefore has two central goals and challenges it hopes to address:
+\noindent This work therefore has two central goals and contributions:
 \begin{itemize}
   \item The design of a calibrated and realistic Agent-Based Model for the tiered nature of central clearing.
-  \item The use of this proposed model to explore the effects of client clearing on the system.\\
-\end{itemize}
-
-\noindent The main and novel contributions of this paper are as follows: \emph{(to be revised with results)}
-\begin{itemize}
-  \item The creation of a financial market simulator with a Limit Order Book, calibrated to reproduce market stylised facts using a machine learning surrogate modelling approach first developed by \cite{lamperti_2018} and adapted for financial market simulations by \cite{gao_2022_xgb}.
-  \item An agent-based model including the tiered nature of central clearing with Clearing Members connected to downstream clients, complete with CCP margin call and default management frameworks.
-  \item Using the Client Clearing ABM, looking at the role client clearing plays in absorbing or propagating risk through the system, and the effect pro-cyclical margin calls in stressed market environments.\\
+  \item The use of this proposed model to explore the procyclical nature of margin calls in stressed market environments.\\
 \end{itemize}
 
 \noindent The rest of the paper is organised as follows. Section \ref{ch:related} reviews the related literature on agent-based market microstructure, central clearing and CCP systemic risk, and agent-based model calibration. Section \ref{ch:model} sets out the structure of the model: the two-tier architecture, the agent types, the call-auction limit order book, the fundamental value process, and the central-clearing tier with its margin, default-fund, and waterfall mechanics. Section \ref{ch:calibration} presents the ES data and the calm and stressed regimes, the surrogate-assisted calibration methodology, and the validation of the calibrated market layer against the empirical stylised facts. Section \ref{ch:results} reports the main results, including the calibration robustness campaign and the client-clearing contagion experiments. Section \ref{ch:implications} discusses the implications of these findings together with the limitations of the approach. Finally, Section \ref{ch:conclusion} concludes and outlines directions for future work.
