@@ -135,7 +135,7 @@ indicating that the surrogate emulated the model with high accuracy. The model h
 \begin{table}[h]
       \centering
       \caption{Model parameters: status and values. The seven trading-agent behavioural parameters are
-      calibrated per regime. The SV-MJD simulated parameters are measured directly from price data. }
+      calibrated per regime. }
       \label{tab:model-params}
       \begin{tabular}{lllcc}
       \hline
@@ -149,15 +149,15 @@ indicating that the surrogate emulated the model with high accuracy. The model h
       $p_d$          & geometric placement depth   & Calibrated & 0.46  & 0.51  \\
       $\lambda$      & MT signal (EWMA) decay      & Calibrated & 0.022 & 0.181 \\
       $\gamma_M$     & MT activation scale         & Calibrated & 0.31  & 0.32  \\
-      \hline
-      \multicolumn{5}{l}{\emph{Fundamental -- SV-MJD path (realized measures)}} \\
-      $\sigma_d$     & diffusion                   & Measured & $2.88\times10^{-4}$ & $1.80\times10^{-3}$ \\
-      $\lambda_J$    & jump intensity (per day)    & Measured & 1.93    & 0.97    \\
-      $\delta$       & jump-size std               & Measured & $1.12\times10^{-3}$ & $7.26\times10^{-3}$ \\
-      $\alpha$       & OU mean-reversion           & Measured & $5.7\times10^{-3}$  & $2.7\times10^{-3}$  \\
-      $\theta$       & OU long-run volatility      & Measured & $2.34\times10^{-4}$ & $1.48\times10^{-3}$ \\
-      $s$            & OU volatility-of-volatility & Measured & $1.49\times10^{-5}$ & $4.88\times10^{-5}$ \\
-      $\mu$          & drift                       & Measured & $1\times10^{-6}$ & $-6\times10^{-6}$ \\
+      % \hline
+      % \multicolumn{5}{l}{\emph{Fundamental -- SV-MJD path (realized measures)}} \\
+      % $\sigma_d$     & diffusion                   & Measured & $2.88\times10^{-4}$ & $1.80\times10^{-3}$ \\
+      % $\lambda_J$    & jump intensity (per day)    & Measured & 1.93    & 0.97    \\
+      % $\delta$       & jump-size std               & Measured & $1.12\times10^{-3}$ & $7.26\times10^{-3}$ \\
+      % $\alpha$       & OU mean-reversion           & Measured & $5.7\times10^{-3}$  & $2.7\times10^{-3}$  \\
+      % $\theta$       & OU long-run volatility      & Measured & $2.34\times10^{-4}$ & $1.48\times10^{-3}$ \\
+      % $s$            & OU volatility-of-volatility & Measured & $1.49\times10^{-5}$ & $4.88\times10^{-5}$ \\
+      % $\mu$          & drift                       & Measured & $1\times10^{-6}$ & $-6\times10^{-6}$ \\
       \hline
       \end{tabular}
       \end{table}
