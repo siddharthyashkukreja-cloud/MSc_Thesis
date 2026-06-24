@@ -84,17 +84,17 @@ By default $V_t$ is the observed one-minute ES mid, and overnight gaps are maint
 \paragraph{Synthetic alternative.}
 
 The alternative replaces $V_t$ with a synthetic series rather than the data. Prices follow a geometric
-Brownian motion with stochastic mean reverting volatility who's logarithm is the sum of a fast and a slow
-mean-reverting factor:
+Brownian motion with stochastic mean reverting volatility. Following the construction of \citet{barndorff_shephard_2001}, the volatility is a level $\sigma_d$ scaled by a
+fast and a slow mean-reverting factor:
 \begin{equation}
   \log V_{t+1} - \log V_t = \mu + \sigma_t\,\varepsilon_t,
   \qquad
-  \log \sigma_t = m + f_t + s_t .
+  \sigma_t = \sigma_d\,\exp\!\big(f_t + s_t\big) .
 \end{equation}
 Each of $f_t$ (fast) and $s_t$ (slow) is an Ornstein--Uhlenbeck process that drifts back toward zero
 at its own speed --- $f_t$ over minutes, giving intraday volatility bursts, and $s_t$ over days,
-carrying volatility that persists across sessions --- and the level $m$ is set so the average variance
-matches the measured daily volatility $\sigma_d^2$. Compared to a single factor, this does a better job at reproducing volatility clustering. Merton jumps were also trialled, but the multiplicative volatility of this mode was sufficient in reproducing heavy tails. 
+carrying volatility that persists across sessions --- and $\sigma_d$ is the measured volatility level. Compared to a single factor, this does a better job at reproducing volatility clustering. Merton jumps were also trialled, but the multiplicative volatility of this model was sufficient to reproduce heavy tails. Synthetic FV parameters such as $f_t,s_t$ and volatility level $\sigma_d$ are jointly calibrated with agent parameters, which to our knowledge is a novel application of the surrogate modelling approach. The drift $\mu$ is set to a target stressed drawdown, 
+
 
 \paragraph{Local volatility.}
 Each fundamental is accompanied by a local volatility $\sigma_t$ that feeds into the FT reservation. For the synthetic path this is simply the mean-reverting volatility above. For
@@ -109,7 +109,7 @@ with the weight $\phi$ averaging over a short intraday window (30 minute half li
 %==============================================================================
 \section{Central Clearing Layer}
 
-The clearing layer offers a simplified but realistic representation of CCP practises, complete with a margin cycle and a default waterfall framework. It guarantees the trades formed in the market of Section~\ref{sec:model-market}. The network is formed by the CCP as a central node, connected to a tier of Bank Clearing Members (BCMs) and Non-Bank Clearing Members (NBCMs), similar to the CCP risk model of \cite{simudyne_odd}, and extends it with a layer of clients that clear through the NBCMs and some of the BCMs. Constants used in the clearing layer, such as the balance sheet sizes of members and default fund and margin sizing are based on regulatory standards or CCP disclosures. The clearing layer and the market layer are connected through a feedback loop; prices formed in the market layer drive margin calls and concentrated portfolios, leading to trading freezes or liquidations when clients and CMs approach capital ratios, which lead to price impact and lower liquidity in the market layer, driving further margin calls. 
+The clearing layer offers a simplified but realistic representation of CCP practises, complete with a margin cycle and a default waterfall framework. It guaranties the trades formed in the market of Section~\ref{sec:model-market}. The network is formed by the CCP as a central node, connected to a tier of Bank Clearing Members (BCMs) and Non-Bank Clearing Members (NBCMs), similar to the CCP risk model of \cite{simudyne_odd}, and extends it with a layer of clients that clear through the NBCMs and some of the BCMs. Constants used in the clearing layer, such as balance sheet sizes of members and default fund and margin sizing, are based on regulatory standards or CCP disclosures. The clearing layer and the market layer are connected through a feedback loop; prices formed in the market layer drive margin calls and concentrated portfolios, leading to trading freezes or liquidations when clients and CMs approach capital ratios, which lead to price impact and lower liquidity in the market layer, driving further margin calls. 
 
 %------------------------------------------------------------------------------
 
