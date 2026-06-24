@@ -9,7 +9,7 @@
 % %  to fill from output/relock/ (and output/relock_gbm/ for the SV-MJD robustness).
 % %==============================================================================
 
-This section presents the methodology for calibrating the agent based financial market simulation. As this serves as the first stage and base of the clearing layer, the market simulation should be well calibrated and able to reproduce the features of real market returns. A common method to do this, and the one adopted by this model, is the reproduction of the moments of empirical returns through the simulation. This chapter describes the data used, the parameters calibrated, the method of calibration and the calibration, and a validation of the calibrated parameters. The chosen moments are the stylised facts of returns we see empirically - the distribution of returns, heavy tails, absence of autocorrelation and volatility clustering. One point to mention is that the market simulation is calibrated in isolation, the freeze-out and liquidation mechanics of clearing have a minor impact on market prices and returns, but including the clearing layer in the calibration would be computationally prohibitive. The model calibration and validation for the synthetic FV paths is reported in 
+This section presents the methodology for calibrating the agent based financial market simulation. As this serves as the first stage and base of the clearing layer, the market simulation should be well calibrated and able to reproduce the features of real market returns. A common method to do this, and the one adopted by this model, is the reproduction of the moments of empirical returns through the simulation. This chapter describes the data used, the method of calibration, and a validation of the calibrated parameters. The chosen moments are the stylised facts of returns we see empirically - the distribution of returns, heavy tails, absence of autocorrelation and volatility clustering. One point to mention is that the market simulation is calibrated in isolation, the freeze-out and liquidation mechanics of clearing have an impact on market prices and returns, but including the clearing layer in the calibration would be computationally prohibitive. The model calibration and validation for the synthetic FV paths is reported in \ref{sec:cal-synth}.
 
 \section{Data and Regimes}
 
@@ -119,7 +119,7 @@ standardisation is applied to each lag inside the average. \cite{franke_westerho
 \section{Calibration Methodology}
 \label{sec:cal-method}
 
-The ABM consists of several parameters that need calibration. Running a multi-day simulation over several random parameter sets to find an optimal set which minimises the loss function would be computationally very expensive. For this model, seven parameters need calibration across two different regimes. The paper therefore uses a surrogate modelling technique to lower this computational cost. The technique was  pioneered by \cite{lamperti_2018}, who train an XGBoost model to classify positive and negative calibrations to find an optimal set of parameters for an Agent Based Model. It was extended by \cite{gao_2022_xgb}, who train the XGBoost model to predict the loss function for a given set of parameter in place of running the simulator.
+The ABM consists of several parameters that need calibration. Running a multi-day simulation over several random parameter sets to find an optimal set which minimises the loss function would be computationally very expensive. For this model, seven parameters $(c_f,\ \lambda,\ \gamma_M,\ \alpha_{zi},\ \mu_{zi},\ \delta_{zi},\ p_d)$ need calibration across two different regimes. The paper therefore uses a surrogate modelling technique to lower this computational cost. The technique was  pioneered by \cite{lamperti_2018}, who train an XGBoost model to classify positive and negative calibrations to find an optimal set of parameters for an Agent Based Model. It was extended by \cite{gao_2022_xgb}, who train the XGBoost model to predict the loss function for a given set of parameter in place of running the simulator.
 
 \subsection{Surrogate Modelling}
 
@@ -135,40 +135,7 @@ set. The selection of the training set combines a selection with the smallest pr
 \end{enumerate}
 
 The quality of the surrogate model is reported using its $R^2$, with a high $R^2$
-indicating that the surrogate emulated the model with high accuracy. The model had an $R^2$ of \textbf{0.90} for the calm regime and \textbf{0.88} for the stressed regime. 
-
-
-\begin{table}[h]
-      \centering
-      \caption{Model parameters: status and values. The seven trading-agent behavioural parameters are
-      calibrated per regime. }
-      \label{tab:model-params}
-      \begin{tabular}{lllcc}
-      \hline
-      Parameter & Description & Status & Calm & Stressed \\
-      \hline
-      \multicolumn{5}{l}{\emph{Trading agents -- calibrated (seven per regime)}} \\
-      $c_f$          & FT belief-width scale       & Calibrated & 0.64  & 0.45  \\
-      $\alpha_{zi}$  & ZI limit-order rate         & Calibrated & 0.54  & 0.36  \\
-      $\mu_{zi}$     & ZI market-order rate        & Calibrated & 0.016 & 0.144 \\
-      $\delta_{zi}$  & ZI cancellation rate        & Calibrated & 0.067 & 0.232 \\
-      $p_d$          & geometric placement depth   & Calibrated & 0.46  & 0.51  \\
-      $\lambda$      & MT signal (EWMA) decay      & Calibrated & 0.022 & 0.181 \\
-      $\gamma_M$     & MT activation scale         & Calibrated & 0.31  & 0.32  \\
-      % \hline
-      % \multicolumn{5}{l}{\emph{Fundamental -- SV-MJD path (realized measures)}} \\
-      % $\sigma_d$     & diffusion                   & Measured & $2.88\times10^{-4}$ & $1.80\times10^{-3}$ \\
-      % $\lambda_J$    & jump intensity (per day)    & Measured & 1.93    & 0.97    \\
-      % $\delta$       & jump-size std               & Measured & $1.12\times10^{-3}$ & $7.26\times10^{-3}$ \\
-      % $\alpha$       & OU mean-reversion           & Measured & $5.7\times10^{-3}$  & $2.7\times10^{-3}$  \\
-      % $\theta$       & OU long-run volatility      & Measured & $2.34\times10^{-4}$ & $1.48\times10^{-3}$ \\
-      % $s$            & OU volatility-of-volatility & Measured & $1.49\times10^{-5}$ & $4.88\times10^{-5}$ \\
-      % $\mu$          & drift                       & Measured & $1\times10^{-6}$ & $-6\times10^{-6}$ \\
-      \hline
-      \end{tabular}
-      \end{table}
-
-
+indicating that the surrogate emulated the model with high accuracy. The model had an $R^2$ of \textbf{0.90} for the calm regime and \textbf{0.88} for the stressed regime. Calibrated parameters are reported in the \ref{ch:appendix}.
 
 \section{Validation}
 \label{sec:cal-validation}
@@ -200,9 +167,6 @@ ACF $|r|(20)$        & 0\%   & 2\%   \\
 Mean per-moment      & 63.6\% & 70.0\% \\
 \bottomrule
 \end{tabular}
-\begin{tablenotes}[flushleft]\footnotesize
-\item The fraction of independent runs whose moment lands in the 95\% empirical interval.
-\end{tablenotes}
 \end{threeparttable}
 \end{table}
 
@@ -238,5 +202,60 @@ The Kolmogorov-Smirnov statistic is not included in the Moment Coverage Ratio as
   \label{fig:cal-hill}
 \end{figure}
 
+% ============================================================================
+
 \section{Synthetic Fundamental: Joint Calibration and Validation}
 \label{sec:cal-synth}
+
+Rather than fitting behaviour to one fundamental path, an alternative is presented by using stochastic fundamental value (FV) paths to base the market and clearing layer upon. The stochastic FV process has its own parameters which needs estimation, and these parameters are calibrated jointly with the agent parameters from the standard model using the same surrogate modelling approach. To the best of our knowledge, this is a novel application of the surrogate modelling approach of \cite{lamperti_2018} and \cite{gao_2022_xgb}, inspired by the joint fundamental and agent estimation of \cite{majewski_2018}.
+
+Only for the stressed regime, the FV and agent parameters are jointly calibrated to fit the stressed ES empirical moments using the surrogate modelling approach explained above. Once again, the calibration and validation is reported for the market layer in isolation, and the spillover effects of the clearing layer are not included. With the FV parameters, the calibration vector now becomes 9-dimensional. Five parameters are from the agent: the fundamentalist belief width $c_f$, the momentum
+activation strength $\gamma_M$, and the zero-intelligence limit-order, market-order and cancellation
+rates $\alpha_{zi}$, $\mu_{zi}$, $\delta_{zi}$. The other four are \emph{fundamental-value} parameters
+of the two-factor log-volatility (Section~\ref{sec:fundamental}): the total variance $\nu^2$ of the two
+factors $f_t,s_t$ (the overall vol-of-vol, fixing the amplitude of clustering and tails), the slow
+factor's share $w$ of that variance (how much sits in the slow rather than the fast factor), the
+slow-to-fast mean-reversion ratio $\rho=\alpha_{\mathrm{slow}}/\alpha_{\mathrm{fast}}$ (how persistent
+the slow factor is relative to the fast), and the volatility level $\sigma_d$. 
+
+After testing, the remaining parameters were kept fixed. The drift $\mu$ and the overnight gaps are set
+as in Section~\ref{sec:fundamental}. The agent parameters $\lambda$ and $p_d$ were fixed to the calibrated values from the standard model. The remaining FV parameter, the fast factor's mean reversion rate, was measured from the ES return data by looking at realised volatility decorrelation (the decay rate of autocorrelation) as done by \cite{bns_2004}. This is an approximation, but pins the fast volatility persistence directly to data and removes a moment from the calibration that does not make theoretical sense to calibrate. The mean reversion ratio of the slow factor to this value can then be calibrated.
+
+\begin{table}[H]
+\centering\small
+\caption{\textbf{Out-of-sample moment validation of the joint synthetic calibration} ($80$ paths,
+$42$ days). Standardised gap $|\Delta|/s$ in K\"unsch bootstrap SDs (inside the empirical $95\%$ CI
+when ${<}1.96$). The two-factor log-volatility repairs the clustering ($|r|$-ACF) and tail (Hill)
+that the single-factor baseline missed; only the lag-one bid-ask bounce stays outside.}
+\label{tab:cal-synth}
+\begin{tabular}{l r r r c}
+\toprule
+Moment & Empirical & Simulated Mean & $|\Delta|/s$ & in $95\%$ CI \\
+\midrule
+Return std                  & $0.0012$  & $0.0012$  & $0.2$ & yes \\
+ACF $r$, lag 1 (bounce)     & $-0.0045$ & $-0.0188$ & $2.7$ & \textbf{no} \\
+ACF $r$, lag 5              & $-0.0033$ & $-0.0030$ & $0.0$ & yes \\
+ACF $r$, lag 10             & $-0.0018$ & $-0.0010$ & $0.2$ & yes \\
+ACF $r$, lag 20             & $-0.0046$ & $-0.0020$ & $0.5$ & yes \\
+ACF $|r|$, lag 1            & $0.379$   & $0.389$   & $0.6$ & yes \\
+ACF $|r|$, lag 5            & $0.350$   & $0.338$   & $0.5$ & yes \\
+ACF $|r|$, lag 10           & $0.334$   & $0.326$   & $0.4$ & yes \\
+ACF $|r|$, lag 20           & $0.338$   & $0.315$   & $1.3$ & yes \\
+Hill tail index             & $2.73$    & $2.71$    & $0.1$ & yes \\
+\midrule
+\multicolumn{3}{l}{\emph{joint coverage}} & \multicolumn{2}{r}{$9/10$\, (mean $0.64$ SD)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The calibration was then validated on 80 fresh stressed paths. The optimum reproduces the stylised facts well, even more so than the standard model. Even long-horizon volatility clustering is reproduced to a large extent. The one remaining minor artifact is a slightly stronger bid-ask bounce than in empirical data, which is still a large improvement over the standard model, and is an artefact of the thin LOB at a one minute frequency. The Mean-Coverage ratio cannot be directly applied to this model, as the stochastic paths vary by large amounts. A simpler validation is performed, with a confidence interval of the empirical moments constructed based on their standard deviation from the bootstrap method, and the paths averaged to look at stylised facts. 
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/synth_facts.png}
+  \caption{\textbf{Stylised facts on the synthetic ensemble} (the simulated mid on the bare market, the
+  calibration target).The two-factor log-volatility reproduces the slow, persistent volatility
+  clustering of empirical ES (bold: mean over the ensemble; thin: individual paths).}
+  \label{fig:cal-synth-facts}
+\end{figure}
