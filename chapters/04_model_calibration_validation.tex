@@ -145,14 +145,19 @@ This section presents the results of the financial market simulation, and the ef
 \begin{table}[h]
 \centering
 \small
-\caption{\textbf{Moment coverage ratio (MCR) by moment.} Fraction of independent simulation runs whose
-moment falls inside the 95\% block-bootstrap confidence interval of the empirical moment.}
+\caption{\textbf{Validation: moment coverage and calibration fit.} \emph{Top:} moment coverage ratio
+(MCR) by moment --- the fraction of independent simulation runs whose moment falls inside the $95\%$
+block-bootstrap confidence interval of the empirical moment. \emph{Bottom:} the simulator's
+stylised-facts distance $D(\theta^\star)$ at the calibrated optimum, evaluated on the calibration seeds
+and re-evaluated on fresh validation seeds, together with the out-of-sample $R^2$ of the XGBoost
+surrogate that emulates $D(\theta)$.}
 \label{tab:cal-mcr}
 \begin{threeparttable}
 \begin{tabular}{lcc}
 \toprule
-Moment & Calm & Stressed \\
+ & Calm & Stressed \\
 \midrule
+\multicolumn{3}{@{}l}{\textit{Moment coverage ratio}}\\
 Return SD            & 100\% & 100\% \\
 Hill tail index      & 92\%  & 100\% \\
 ACF $r(1)$           & 46\%  & 88\%  \\
@@ -163,14 +168,19 @@ ACF $|r|(1)$         & 98\%  & 76\%  \\
 ACF $|r|(5)$         & 0\%   & 22\%  \\
 ACF $|r|(10)$        & 0\%   & 34\%  \\
 ACF $|r|(20)$        & 0\%   & 2\%   \\
-\midrule
 Mean per-moment      & 63.6\% & 70.0\% \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Calibration fit}}\\
+Loss $D(\theta^\star)$, calibration seeds & 19.7 & 6.3 \\
+Loss $D(\theta^\star)$, validation seeds  & 22.6 & 7.7 \\
+Surrogate $R^2$                           & 0.90 & 0.88 \\
 \bottomrule
 \end{tabular}
 \end{threeparttable}
 \end{table}
 
-For the calm regime, as can be seen, some moments are very accurately estimated. Long-horizon volatility clustering, however, appears to be structurally unreachable. We see weaker volatility clustering in the model than we see in empirical returns, and this is more prominent for the calm regime. For the stressed regime, we see a better model fit overall. While long horizon volatility clustering is still below empirical, it is much closer. Lag-1 and 2 autocorrelation indicates that the model suffers from a bid-ask bounce, which is improved in the stressed regime.
+
+For the calm regime, as can be seen, some moments are very accurately estimated. Long-horizon volatility clustering, however, appears to be structurally unreachable. We see weaker volatility clustering in the model than we see in empirical returns, and this is more prominent for the calm regime. For the stressed regime, we see a better model fit overall. While long horizon volatility clustering is still below empirical, it is much closer. Lag-1 and 2 autocorrelation indicates that the model suffers from a bid-ask bounce, which is improved in the stressed regime. The loss function $\theta$ is also lower for the stressed regime, signalling a better fit of parameters there.
 
 \begin{figure}[H]
   \centering
@@ -226,7 +236,9 @@ as in Section~\ref{sec:fundamental}. The agent parameters $\lambda$ and $p_d$ we
 \caption{\textbf{Out-of-sample moment validation of the joint synthetic calibration} ($80$ paths,
 $42$ days). Standardised gap $|\Delta|/s$ in K\"unsch bootstrap SDs (inside the empirical $95\%$ CI
 when ${<}1.96$). The two-factor log-volatility repairs the clustering ($|r|$-ACF) and tail (Hill)
-that the single-factor baseline missed; only the lag-one bid-ask bounce stays outside.}
+that the single-factor baseline missed; only the lag-one bid-ask bounce stays outside. The lower block
+reports the Franke-standardised loss $D(\theta^\star)$ at the calibrated optimum and the held-out
+$R^2$ of the gradient-boosted surrogate over $D(\theta)$.}
 \label{tab:cal-synth}
 \begin{tabular}{l r r r c}
 \toprule
@@ -244,11 +256,12 @@ ACF $|r|$, lag 20           & $0.338$   & $0.315$   & $1.3$ & yes \\
 Hill tail index             & $2.73$    & $2.71$    & $0.1$ & yes \\
 \midrule
 \multicolumn{3}{l}{\emph{joint coverage}} & \multicolumn{2}{r}{$9/10$\, (mean $0.64$ SD)} \\
+\multicolumn{3}{l}{\emph{loss} $D(\theta^\star)$} & \multicolumn{2}{r}{$6.7$} \\
+\multicolumn{3}{l}{\emph{surrogate} $R^2$} & \multicolumn{2}{r}{$0.94$} \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-The calibration was then validated on 80 fresh stressed paths. The optimum reproduces the stylised facts well, even more so than the standard model. Even long-horizon volatility clustering is reproduced to a large extent. The one remaining minor artifact is a slightly stronger bid-ask bounce than in empirical data, which is still a large improvement over the standard model, and is an artefact of the thin LOB at a one minute frequency. The Mean-Coverage ratio cannot be directly applied to this model, as the stochastic paths vary by large amounts. A simpler validation is performed, with a confidence interval of the empirical moments constructed based on their standard deviation from the bootstrap method, and the paths averaged to look at stylised facts. 
+The calibration was then validated on 80 fresh stressed paths. The optimum reproduces the stylised facts well, even more so than the standard model. Even long-horizon volatility clustering is reproduced to a large extent. The one remaining minor artifact is a slightly stronger bid-ask bounce than in empirical data, which is still a large improvement over the standard model, and is an artefact of the thin LOB at a one minute frequency. The Mean-Coverage ratio cannot be directly applied to this model, as the stochastic paths vary by large amounts. A simpler validation is performed, with a confidence interval of the empirical moments constructed based on their standard deviation from the bootstrap method, and the paths averaged to look at stylised facts. The loss function $\theta$ is lower than for the standard stressed model, signalling a better fit.
 
 
 \begin{figure}[H]
