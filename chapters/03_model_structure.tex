@@ -30,6 +30,8 @@ The market consists of a single asset discrete time Limit Order Book (LOB), with
 \end{equation}
 where $b_t$ and $a_t$ are the best bid and best ask at the end of step $t$. The bid-ask spread and liquidity are a product of agent order placement, market environment, and trader balance sheets. The one minute frequency added the right balance in granularity to allow for straightforward calibration and adequate book depths with a lower amount of traders, and allow for longer runs without it being computationally prohibitive.
 
+At a session boundary/new day the book is not cleared but repriced. The book is scaled and reopens at the new gapped fundamental with its shape intact. Momentum trader memory is also reset so that the overnight return does not enter into the momentum signal. This is a stylised simplification, replicating the exchange opening auction would add complexity and rebuilding from an empty book at session/day open would be disorderly. 
+
 %------------------------------------------------------------------------------
 \subsection{Trading Agents}
 \label{sec:agents}
@@ -46,7 +48,8 @@ Fundamental traders trade based on the fundamental value (FV) of the stock, with
 where $\sigma_t$ is the local volatility of the fundamental (Section~\ref{sec:fundamental}) - an EWMA of its squared returns - and
 $c_f$ is a calibrated scale that sets the width of the belief
 distribution.
-The trader buys when its reservation sits above the mid-price and sells when it sits below, placing a limit order at its unique $R^{i}_t$. The heterogeneous $z_i$ being fixed for a trader at onset leads to high $z_i$ traders holding a more optimistic view that causes their positions to accumulate and build, and vice-versa for the low $z_i$ traders. This leads to concentrated inventories, allowing for meaningful exposures to margin calls and market stress. The belief width scale $c_f$ is calibrated as a parameter and controls how far reservations travel from FV and acts as a meaningful lever in reproducing stylised facts, and allows for a more accurate model for the calm and stressed period split. 
+The trader buys when its reservation sits above the mid-price and sells when it sits below, placing a limit order at its unique $R^{i}_t$. The heterogeneous $z_i$ being fixed for a trader at onset leads to high $z_i$ traders holding a more optimistic view that causes their positions to accumulate and build, and vice-versa for the low $z_i$ traders. This leads to concentrated inventories, allowing for meaningful exposures to margin calls and market stress. The belief-width scale $c_f$, calibrated per regime, sets how far reservations travel from the
+fundamental and is a key lever for reproducing the stylised facts across the two regimes.
 
 
 \subsubsection{Momentum Trader}
@@ -93,7 +96,7 @@ fast and a slow mean-reverting factor:
 \end{equation}
 Each of $f_t$ (fast) and $s_t$ (slow) is an Ornstein--Uhlenbeck process that drifts back toward zero
 at its own speed --- $f_t$ over minutes, giving intraday volatility bursts, and $s_t$ over days,
-carrying volatility that persists across sessions --- and $\sigma_d$ is the measured volatility level. Compared to a single factor, this does a better job at reproducing volatility clustering. Merton jumps were also trialled, but the multiplicative volatility of this model was sufficient to reproduce heavy tails. Synthetic FV parameters such as $f_t,s_t$ and volatility level $\sigma_d$ are jointly calibrated with agent parameters, which to our knowledge is a novel application of the surrogate modelling approach. The drift $\mu$ is set to a target stressed drawdown, 
+carrying volatility that persists across sessions --- and $\sigma_d$ is the measured volatility level. Compared to a single factor, this does a better job at reproducing volatility clustering. Merton jumps were also trialled, but the multiplicative volatility of this model was sufficient to reproduce heavy tails. Synthetic FV parameters such as fast to slow ratio and volatility level $\sigma_d$ are jointly calibrated with agent parameters, which to our knowledge is a novel application of the surrogate modelling approach, explained in Section~\ref{sec:cal-method}. The one minute drift $\mu$ is set to a target stressed drawdown of 30\% over a two month (42 session) stressed window. 
 
 
 \paragraph{Local volatility.}
@@ -105,11 +108,15 @@ returns,
 \end{equation}
 with the weight $\phi$ averaging over a short intraday window (30 minute half life) and the average reset at each session open so the overnight gap does not enter it. 
 
+\paragraph{Overnight gaps.}
+
+Both fundamentals carry an overnight gap at the session boundaries. In ES data, these overnight returns contribute to $\sim 40\%$ of return variance with the largest moves occurring overnight. The data driven FV path carries these gaps in sequence, and the synthetic path randomly draws one of these gaps from the regime's overnight returns. These gaps are also excluded when parameters are calibrated.
+
 
 %==============================================================================
 \section{Central Clearing Layer}
 
-The clearing layer offers a simplified but realistic representation of CCP practises, complete with a margin cycle and a default waterfall framework. It guaranties the trades formed in the market of Section~\ref{sec:model-market}. The network is formed by the CCP as a central node, connected to a tier of Bank Clearing Members (BCMs) and Non-Bank Clearing Members (NBCMs), similar to the CCP risk model of \cite{simudyne_odd}, and extends it with a layer of clients that clear through the NBCMs and some of the BCMs. Constants used in the clearing layer, such as balance sheet sizes of members and default fund and margin sizing, are based on regulatory standards or CCP disclosures. The clearing layer and the market layer are connected through a feedback loop; prices formed in the market layer drive margin calls and concentrated portfolios, leading to trading freezes or liquidations when clients and CMs approach capital ratios, which lead to price impact and lower liquidity in the market layer, driving further margin calls. 
+The clearing layer offers a simplified but realistic representation of CCP practises, complete with a margin cycle and a default waterfall framework. It guaranties the trades executed in the exchange layer of Section~\ref{sec:model-market}. The network consists of the CCP as a central node, connected to a tier of Bank Clearing Members (BCMs) and Non-Bank Clearing Members (NBCMs), similar to the CCP risk model of \cite{simudyne_odd}, and extends it with a layer of clients that clear through the NBCMs and some of the BCMs. Constants used in the clearing layer, such as balance sheet sizes of members and default fund and margin sizing, are based on regulatory standards or CCP disclosures. The clearing layer and the market layer are connected through a feedback loop; prices formed in the market layer drive margin calls and concentrated portfolios, leading to trading freezes or liquidations when clients and CMs approach capital ratios, which lead to higher transactions costs and lower liquidity in the market layer, further impacting balance sheets.  
 
 %------------------------------------------------------------------------------
 
@@ -121,7 +128,9 @@ The CCP is connected to a layer of 10 BCMs - out of which 5 offer client clearin
 \subsubsection{Central Counterparty (CCP)}
 
 The CCP novates every cleared trade, maintains the member registry and
-the per-member default-fund accounts, issues the margin calls, and manages defaults in accordance with a five-level default waterfall. The CCP has its own capital of \$1.5\,billion, mimicking the scale of a large clearing house. It uses this capital to contribute to the default fund, a CCP \emph{skin-in-the-game} (SITG), sized at $3\%$ of the overall pooled default fund \citep{fia_tracker}. When a Clearing Member defaults, the CCP takes on their residual book (client books are ported to other CMs) and transfers it to a surviving member with the largest offsetting position at a discount, a simplification of the closeout auctions CCPs perform in reality. Specifics on the default management framework are laid out in (Section~\ref{sec:model-default}).
+the per-member default-fund accounts, issues the margin calls, and manages defaults in accordance with a five-level default waterfall. The CCP has its own capital of \$1.5\,billion, mimicking the scale of a large clearing house. It uses this capital to contribute to the default fund, a CCP \emph{skin-in-the-game} (SITG), sized at $3\%$ of the overall pooled default fund, based on observed amounts \citep{fia_tracker}. When a Clearing Member defaults, the CCP takes on their residual book (client books are ported to other CMs) and transfers it to a surviving member with the largest offsetting position at a discount, a simplification of the closeout auctions CCPs perform in reality. Specifics on the default management framework are laid out in Section~\ref{sec:clearing-margin}.
+
+\vspace{0.5cm}
 
 \begin{figure}[H]
   \centering
@@ -129,30 +138,32 @@ the per-member default-fund accounts, issues the margin calls, and manages defau
   \caption{The tiered clearing topology. A central counterparty novates every cleared trade; ten
   banking and five non-banking clearing members hold bilateral links to it; ninety end-clients
   clear through the ten client-carrying members. Banking members additionally trade their own
-  accounts.}
+  accounts. Size of a node reflects the size of the balance sheet drawn for each agent.}
   \label{fig:clearing_topology}
 \end{figure}
 
 \subsubsection{Banking Clearing Members (BCMs)}
 
-There are 10 total BCMs, all 10 trading a house account under the fundamental trader logic \ref{sec:agents}, and 5 among these offer client clearing services. All BCMs carry institutional scale initial capital, drawn from  $U[\$5,\$10]$\ billion, in line with observed scales \citep{cftc_fcm}. The Basel III Capital Adequacy Ratio (CAR) is used as a constraint for these members \citep{haynes_mcphail_zhu_2019,acosta_smith_2018}. They trade under the constraint  $\kappa = \mathrm{cash}/\mathrm{exposure} \ge 8\%$, where cash is net of posted margin and exposure is the member's own and its client cleared notional. This mimics Basel III Pillar-1 Capital requirement of holding 8\% of Risk-Weighted Assets as Tier 1 capital. Besides accumulated positions, higher margins also lower cash and hence add to the transmission of stress by tightening the capital ratio. To restrict unbounded positions in one direction by these BCMs, an additional constraint is established: $|N^{\mathrm{own}}_\tau| \le 2\,C_\tau$ --- a flat cap  in the
-spirit of a trading-book risk limit \citep{basel_frtb}. The limit is set such that the CAR stays comfortably above the constraint in calm periods and only approaches it during stressed periods.
+There are 10 total BCMs, all 10 trading a house account under FT logic \ref{sec:agents}, and 5 among these offer client clearing services. All BCMs carry institutional scale initial capital, drawn from  $U[\$5,\$10]$\ billion, in line with observed scales \citep{cftc_fcm}. The Basel III Capital Adequacy Ratio (CAR) is used as a constraint for these members \citep{haynes_mcphail_zhu_2019,acosta_smith_2018}. They trade under the constraint  $\kappa = \mathrm{cash}/\mathrm{exposure} \ge 8\%$, where cash is net of posted margin and exposure is the member's own and its client cleared notional. This mimics Basel III Pillar-1 Capital requirement of holding 8\% of Risk-Weighted Assets as Tier 1 capital. Besides accumulated positions, higher margins also lower cash and hence add to the transmission of stress by tightening the capital ratio. A flat cap is also placed on each BCM's book relative to its capital.  A client-clearing BCM is held to $|N^{\mathrm{own}}_\tau| \le 2\,C_\tau$. A house-only
+BCM carries no client notional, so the same multiple would pin its ratio far above the $8\%$ floor; it is instead given the looser $|N^{\mathrm{own}}_\tau| \le 5\,C_\tau$, enough for its
+book to approach the floor under stress as a client-clearing member's does, without permitting an
+excessive build-up. 
 
-On breaching the $8\%$ floor, a BCM freezes  trading and client clearing, and deleverages its own book until it returns to a $10\%$ capital ratio. As this deleveraging takes place on exchange, the BCM tries to limit price impact through an Almgren-Chriss optimal execution schedule \citep{almgren_chriss_2000}. 
+On breaching the $8\%$ floor, a BCM freezes trading and client clearing, and deleverages its own book until it returns to a $10\%$ capital ratio. As this deleveraging takes place on exchange, the BCM tries to limit price impact through an Almgren-Chriss optimal execution schedule \citep{almgren_chriss_2000}. 
 
 \subsubsection{Non-Banking Clearing Members (NBCMs)}
 
-The five NBCMs have a purely clearing function, they hold no proprietary positions and do not put in orders. Their capital is significantly lower than the BCMs, and drawn from $U[\$0.5\,,\$3]$\ billion, similar to observed levels  \citep{cftc_fcm}. The NBCMs forward margin calls to their clients, but are responsible for client shortfalls on default and the default fund contributions. They have the same CAR as the BCMs, but instead of deleveraging they simply freeze clearing services until the capital ratio moves back above the threshold. \cite{simudyne_odd} follow a similar design for deleveraging and freezing between BCMs and NBCMs. 
+The five NBCMs have a purely clearing function, they hold no proprietary positions and do not put in orders. Their capital is significantly lower than the BCMs, and drawn from $U[\$0.5\,,\$3]$\ billion, similar to observed levels  \citep{cftc_fcm}. The NBCMs forward margin calls to their clients, but are responsible for client shortfalls on default and the default fund contributions. They have the same CAR as the BCMs, but instead of deleveraging they simply freeze clearing services until the capital ratio moves back above the threshold. \cite{deloitte_ccp} follow a similar design for deleveraging and freezing between BCMs and NBCMs. 
 
 \subsubsection{Clients}
 
-The client layer is an explicit extension on the work of \cite{deloitte_ccp}. Ninety clients - thirty fundamental traders, twenty momentum traders, and forty noise traders - clear through the NBCMs and the five BCMs that offer client clearing. Each client is connected to a single CM, a simplification in line with \cite{ofr_2026} who find that the modal client only has one clearing connection.
+The client layer is an explicit extension on the work of \cite{deloitte_ccp}. Ninety clients clear through the NBCMs and the five BCMs that offer client clearing. Each client is connected to a single CM, a simplification in line with \cite{ofr_2026} who find that the modal client only has one clearing connection.
 
 Clients are assigned to clearing members by a capacity-proportional (leverage-balanced) rule. Clients are looked at in order of largest size, and assigned to a member for whom the resulting client book to capital ratio would be lowest. Each client clearing member then ends up with a similar ratio for their cash balance and client cash balance. In this way, the largest clients clear through the largest CMs. The resulting number of clients varies from 3 for a small NBCM to 16 for a large BCM.  Client capital is drawn by type --- fundamental clients
 $U[\$0.5,\$3]$\,billion, momentum clients $U[\$0.2,\$1]$\,billion, and noise (zero-intelligence)
 accounts $U[\$200,\$500]$\,million. Due to this, more of the large fundamental books end up at the banks and the NBCMs carry more of the noise traders. 
 
-A client may take on a position up to its CM's house margin limit: set at a fixed 15\% of notional. This is a simplifying assumption to restrict large positions whose margin cannot be financed, based on realistic margin levels for client accounts. Each margin cycle, variation margin is covered through their cash and initial margin is placed to the CCP through the clearing member. Furthermore, it also freezes trading if its own CAR goes to 4\%. This allows the client to take on more risk than the CMs. If it cannot meet a margin call using its cash, a client has defaulted. On account of a client default, its clearing member assumes its position and liquidates it over an Almgren-Chriss Schedule \citep{almgren_chriss_2000}, covering any residual shortfall over the clients' posted margins. 
+A client may take on a position up to its CM's house margin limit: set at a fixed 15\% of notional. This is a simplifying assumption to restrict large positions whose margin cannot be financed. This level is higher than the CCP's IM that falls within  $4$--$11\%$, proxying the higher requirements CMs require from their clients. Each margin cycle, variation margin is covered through their cash and initial margin is placed to the CCP through the clearing member. Furthermore, it also freezes trading if its own CAR goes to 4\%. This allows the client to take on more risk than the CMs. If it cannot meet a margin call using its cash, a client has defaulted. On account of a client default, its clearing member assumes its position and liquidates it over an Almgren-Chriss Schedule \citep{almgren_chriss_2000}, covering any residual shortfall over the clients' posted margins. 
 
 
 %------------------------------------------------------------------------------
@@ -174,7 +185,7 @@ f_\tau =  \max\!\bigl(4\%,\; \alpha_{99}\,\sigma^{\mathrm{daily}}_\tau\,\sqrt{\m
 
  $\sigma^{\mathrm{daily}}_\tau$ is the daily return volatility calculated as an
 exponentially-weighted average of recent daily returns --- the RiskMetrics
-$\lambda\approx0.94$ convention, using daily price data including a pre-window period so it is available on simulation day one. MPOR of 1 day aligns with the CME convention for ES Mini contracts; and $\alpha_{99}=3.0$ is the
+$\lambda\approx0.94$ convention, using daily price data including a pre-window period so it is available on simulation day one. Close to close returns are used to so the overnight gaps are included in IM calculation. MPOR of 1 day aligns with the CME convention for ES Mini contracts; and $\alpha_{99}=3.0$ is the
 $99\%$ quantile of E-mini S\&P~500 returns based on a Filtered Historical Simulation, as returns are not always normally distributed. The $4\%$ floor is an anti-procyclicality minimum (EMIR Art.~28): in quiet markets the
 raw VaR sits below it, so margin holds at $4\%$; in stress the VaR term takes over and the rate climbs
 with volatility (to $\sim$11\%).  A cleared client
@@ -186,7 +197,9 @@ IM is recalculated every hour, and is called in alongside the Variation Margin (
 
 \subsubsection{Liquidation and Porting}
 
-A default is resolved differently by both layers. For a client default, its CM assumes its position and liquidates it on the open market, following an Almgren-Chriss schedule to limit price impact. The default of a Clearing Member is resolved by the CCP, it covers losses first through the defaulter's Initial Margin and transfers its position to the member with the largest opposing position at a recovery rate of 0.80. This is a simplified representation of the auction a CCP does with remaining members, and is meant to limit losses through the fire sales of large positions. The Almgren-Chriss schedule also differs in the stressed and calm period, front loading more aggressively in stressed due to higher volatility, and with near uniform (TWAP) liquidation in calm periods -- although here it rarely gets exercised. The impact coefficients are calibrated per regime from 1-min price and volume data, the temporary impact coefficient from a regression of $|r|$ on traded volume and the permanent coefficient from a regression of forward cumulative returns on signed volume, and the optimum liquidation urgency is derived using these parameters and a risk aversion parameter shared across regimes \citep{almgren_chriss_2000}. Permanent impact is empirically negative (prices revert beyond the trade), so the permanent impact is floored at zero and the market is treated as transient-impact
+A default is resolved differently by both layers. For a client default, its CM assumes its position and liquidates it on the open market, following an Almgren-Chriss schedule to limit price impact. The default of a Clearing Member is resolved by the CCP, it covers losses first through the defaulter's Initial Margin and transfers its position to the member with the largest opposing position at a recovery rate of 0.80. This is a simplified representation of the auction a CCP does with remaining members, and is meant to limit losses through the fire sales of large positions.
+
+CM assumed positions are liquidated over a 30 minute horizon, sliced into Almgren-Chriss (AC) sized market orders to limit transitory price impact. The AC schedule front loads more aggressively in stressed periods due to higher volatility, and approaches near uniform (TWAP) liquidation in calm periods -- although here it rarely gets exercised. The impact coefficients are calibrated per regime from 1-min price and volume data, and the optimum liquidation urgency is derived using these parameters and a risk aversion parameter shared across regimes \citep{almgren_chriss_2000}. Permanent impact is empirically negative at this horizon, so the permanent impact is floored at zero and the market is treated as transient-impact
 dominated at the one-minute horizon \citep{bouchaud_gefen_potters_wyart_2004}.
 
 On a member default the CCP first tries to port the defaulter's surviving clients to other
@@ -213,7 +226,12 @@ book. The SITG level is based on the amounts seen at major CCPs that sit around 
 
 \subsubsection{Default Waterfall}
 
-The resources CCPs use to protect against default, such as IM and Default Funds, are known as a CCPs default waterfall. The default waterfall is modelled as shown in Figure~\ref{fig:waterfall}. The first stage is the defaulter's Initial Margin, then their own default fund contribution. Next, a layer of CCP equity known as Skin-in-the-game (SITG) is used, and following that the mutualised pooled default fund. After that, the CCP enters a state of recovery, using more of its equity and practises such as VM gains haircutting, but these recovery steps are not part of the model. In extreme scenarios, the model reaches the pooled default fund.
+The resources a CCP uses to absorb a default form its default waterfall, modelled as in
+Figure~\ref{fig:waterfall}. The defaulter's Initial Margin is seized first, then its own default-fund
+contribution. Next comes the CCP's skin-in-the-game (SITG), and following that the mutualised pooled
+default fund. Beyond the pooled fund the model draws on the surviving members' own cash, pro-rata and finally the CCP's remaining capital; only beyond these would the
+CCP enter recovery (e.g.\ variation-margin gains haircutting), which is outside the model's scope. In
+the stressed experiments, defaults reach the pooled default fund (L3) at most.
 
 \begin{figure}[H]
 \centering
@@ -229,8 +247,8 @@ The resources CCPs use to protect against default, such as IM and Default Funds,
   \node[tranche, fill=Apricot!55]    (l1) at (0,-1) {\textbf{L1}\quad Defaulter's Default Fund contribution};
   \node[tranche, fill=SkyBlue!45]    (l2) at (0,-2) {\textbf{L2}\quad CCP skin-in-the-game (SITG)};
   \node[tranche, fill=YellowGreen!40](l3) at (0,-3) {\textbf{L3}\quad Pooled surviving-member Default Fund};
-  \node[tranche, fill=YellowGreen!60](l4) at (0,-4) {\textbf{L4}\quad CCP equity and capital};
-  \node[tranche, fill=Salmon!45]     (l5) at (0,-5) {\textbf{L5}\quad Recovery};
+  \node[tranche, fill=YellowGreen!60](l4) at (0,-4) {\textbf{L4}\quad Surviving members' cash (pro-rata)};
+  \node[tranche, fill=Salmon!45]     (l5) at (0,-5) {\textbf{L5}\quad CCP capital};
 
   % --- left: order-of-absorption arrow ---
   \draw[->, very thick] (-5.0,0.45) -- (-5.0,-5.45);
@@ -241,9 +259,9 @@ The resources CCPs use to protect against default, such as IM and Default Funds,
   \draw[grp] (4.7, 0.42) -- (4.7,-1.42) node[grplab, midway] {Defaulter's own resources\\};
   \draw[grp] (4.7,-1.58) -- (4.7,-2.42) node[grplab, midway] {CCP first loss};
   \draw[grp] (4.7,-2.58) -- (4.7,-4.42) node[grplab, midway] {Mutualised across\\survivors };
-  \draw[grp] (4.7,-4.58) -- (4.7,-5.42) node[grplab, midway] {Extreme case -- beyond model};
+\draw[grp] (4.7,-4.58) -- (4.7,-5.42) node[grplab, midway] {CCP equity};
 \end{tikzpicture}
 \caption{\textbf{The CCP default waterfall.} A clearing-member default triggers a fixed sequence of
-loss-absorbing tranches, drawn strictly top-down, and the model records the deepest level reached.}
+loss-absorbing tranches, drawn strictly top-down, and the model records the deepest level reached. In the experiments, the pooled default fund L3 is the deepest level reached.}
 \label{fig:waterfall}
 \end{figure}
