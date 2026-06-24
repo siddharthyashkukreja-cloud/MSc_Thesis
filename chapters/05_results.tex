@@ -1,9 +1,15 @@
-This chapter presents the standard and calibrated model across both regimes. The historical mid-price is used as a proxy for the fundamental values, as mentioned in \ref{sec:fundamental}, but this can easily be replaced with a synthetic series. A calibrated model that reproduces stylised facts in the market layer, and offers a realistic model for CCP and client clearing in the clearing layer is in itself a major contribution. To demonstrate a possible use for the model, the ABM is used to study the procyclicality of margin calls. Finally, the synthetic-path extension is presented that allows for the model to be simulated under independent stochastic fundamental value paths to stress test CCP resilience, with the freedom to study the effects of changes in various parameters and CCP design elements. (Disclaimer: This final part will be added for the final version, late
-changes rendered the computation for this to be impossible to do in time, but it was verified
-that the synthetic series was adequate in reproducing stylised facts and interacted smoothly with
-the clearing layer)
+In this chapter, the Agent-Based Model for Client Clearing is presented across calm and stressed regimes. The standard model used the historical mid price series as a proxy for the Fundamental Value. The model is then demonstrated through a study of the procyclical nature of margin calls in stressed environments, comparing stress reactive margining to flat and constant margining. Finally, a version of the model is presented that replaces the empirical mid price fundamental value with a stochastic fundamental value, further expanding the usefulness of the model through simulations across various diverse paths. 
+
 
 \section{The Client-Clearing ABM}
+
+This section simply presents the standard ABM as it is, across both regimes. The visualised mechanics of the model aid in a deeper understanding and a validation of the model's functions. 
+
+
+
+
+
+
 
 This section presents the two-tier ABM for client clearing. It combines a calibrated LOB with realistic clearing practices and a CCP default waterfall. The descriptive figures illustrate the price generation, order flow, margin cycles and capital adequacies across the model.
 
