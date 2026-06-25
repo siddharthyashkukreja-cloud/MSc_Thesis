@@ -19,7 +19,7 @@ not reproduced here.
 \centering\small
 \setlength{\tabcolsep}{6pt}\renewcommand{\arraystretch}{1.18}
 \caption{\textbf{Agent parameters of the standard model.} Calibrated per regime by surrogate-assisted
-simulated moments; \textsc{fixed} parameters are design choices, identical across regimes.}
+simulated moments.}
 \label{tab:app-agent}
 \begin{tabular}{@{}l l p{5cm} r r l@{}}
 \toprule
@@ -37,7 +37,7 @@ $\alpha_{zi}$ & \texttt{zi\_alpha}   & limit-order arrival rate                 
 $\mu_{zi}$    & \texttt{zi\_mu}      & market-order arrival rate                        & 0.0156 & 0.144 & calibrated \\
 $\delta_{zi}$ & \texttt{zi\_delta}   & resting-order cancellation rate                  & 0.0667 & 0.232 & calibrated \\
 \multicolumn{6}{@{}l}{\itshape Momentum trader (MT) \& Noise trader (ZI) shared}\\
-$p_d$         & \texttt{p\_d}       & geometric limit-placement depth, $k\sim\mathrm{Geom}(p_d)$ & 0.460 & 0.512 & calibrated \\
+$p_d$         & \texttt{p\_zi}       & geometric limit-placement depth, $k\sim\mathrm{Geom}(p_d)$ & 0.460 & 0.512 & calibrated \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -65,7 +65,7 @@ $\delta_{zi}$ & \texttt{zi\_delta}    & ZI resting-order cancellation rate     &
 \addlinespace
 \multicolumn{5}{@{}l}{\itshape Agent --- held at the standard stressed value} \\
 $\lambda_M$   & \texttt{mt\_lambda}   & momentum EWMA decay                    & 0.181                & fixed \\
-$p$           & \texttt{p\_d}        & geometric limit-placement depth        & 0.512                & fixed \\
+$p_d$           & \texttt{p\_zi}        & geometric limit-placement depth        & 0.512                & fixed \\
 \addlinespace
 \multicolumn{5}{@{}l}{\itshape Fundamental: two-factor log-volatility --- calibrated} \\
 $\nu^2$       & \texttt{f}            & total log-volatility variance (clustering \& tail) & 0.881    & calibrated \\
