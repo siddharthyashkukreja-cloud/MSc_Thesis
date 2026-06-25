@@ -35,7 +35,7 @@ $\approx\$6.3$B in calm) this draws about $19\%$ of the pooled fund.
   \label{fig:res-kappa}
 \end{figure}
 
-\noindent This stylised result from the model stresses the importance for NBCMs to have an available external funding source that is reliable even in stressful market situations. The lack of an own book that can be liquidated to generate liquidity is a vulnerability for the NBCM, even when it freezes all client trading at a comfortable capital ratio of 8\%.
+\noindent This stylised result from the model stresses the importance for NBCMs to have an available external funding source that is reliable even in stressful market situations. The lack of an own book that can be liquidated to generate liquidity is a vulnerability for the NBCM, even when it freezes all client trading at a capital ratio of 8\%.
 
 \paragraph{Margin is procyclical and clusters.} Posted margin sits at the anti-procyclicality floor of 4\% for the entirety of the calm period and the start of the stressed period, ramping upto a peak of $11.4\%$ in stressed, averaging at $7.7\%$ over the window (Figure~\ref{fig:res-im}), a result of the volatility sensitive VaR margining.
 
@@ -120,7 +120,7 @@ The attractiveness of the VaR reactive margin can be easily seen, it offers perf
 
 \subsection{Mechanism: loss relocation}\label{sec:res-mech}
 
-The relocation of defaults from clients to members as flat IM increases offers an interesting avenue for further analysis. This relocation appears to stem from CM freezes -- CMs that breach their capital adequacy floor (CAR) stop clearing, freezing their clients. The position of these clients then accumulates VM transfers due to negative returns. With higher margins, more cash is taken as margin and hence members breach their CAR earlier in the crash, but at the same this this turns into a trap. Due to the early freeze, members holding onto a large position who cannot liquidate it and default as the market falls. Despite the median of defaulted positions being lower for higher flat margins, the tail of positions on default is a lot higher (Figure~\ref{fig:mech-position}). The CM then assumes this large position that it must liquidate onto a falling market, and the losses on this overwhelm especially the NBCMs causing them to default. 
+The relocation of defaults from clients to members as flat IM increases offers an interesting avenue for further analysis. This relocation appears to stem from CM freezes -- CMs that breach their capital adequacy floor (CAR) stop clearing, freezing their clients. The position of these clients then accumulates VM transfers due to negative returns. With higher margins, more cash is taken as margin and hence members breach their CAR earlier in the crash, but at the same time, this turns into a trap. Due to the early freeze, clients holding onto a large position cannot liquidate it and default as the market falls. Despite the median of defaulted positions being lower for higher flat margins, the tail of positions on default is a lot higher (Figure~\ref{fig:mech-position}). The member then assumes this large position that it must liquidate onto a falling market, and the losses on this overwhelm especially the NBCMs causing them to default. 
 
 \begin{figure}[H]\centering
   \includegraphics[width=\textwidth]{Figures/mech_position.png}
@@ -131,7 +131,7 @@ The relocation of defaults from clients to members as flat IM increases offers a
   \label{fig:mech-position}
 \end{figure}
 
-\noindent This highlights the vulnerability these clients face by having only a single clearing connection at the median \citep{ofr_2026}. If a CM facing capital or liquidity constraints decides to freeze offering clearing services to its clients, the clients are left holding onto a possible unwanted position that by regulation must be centrally cleared. At the same time, this is also a consequence of the simplified model design. In reality, an inability to liquidate is not an absolute, but in stressed market situations, porting and finding new members would prove to be difficult. \cite{acosta_smith_2018} also show that capital ratio requirements did leave members less willing to provide clearing services.  
+\noindent This highlights the vulnerability these clients face by having only a single clearing connection at the mode \citep{ofr_2026}. If a CM facing capital or liquidity constraints decides to freeze offering clearing services to its clients, the clients are left holding onto a possible unwanted position that by regulation must be centrally cleared. At the same time, this is also a consequence of the simplified model design. In reality, an inability to liquidate is not an absolute, but in stressed market situations, porting and finding new members would prove to be difficult. \cite{acosta_smith_2018} also show that capital ratio requirements did leave members less willing to provide clearing services.  
 
 
 \section{A Synthetic Path Alternative}
