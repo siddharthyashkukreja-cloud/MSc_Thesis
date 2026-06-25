@@ -70,15 +70,14 @@ $\approx\$6.3$B in calm) this draws about $19\%$ of the pooled fund.
 
 The model is then applied to look at margining practices -- volatile reactive margining is compared to flat and constant margins at different levels. Volatility sensitive margining is procyclical by construction, demanding collateral in stressful times where liquidity is hardest to raise \citep{brunnermeier_pedersen_2009,glasserman_wu_2018}. An anti-procyclicality (APC) buffer is standard practice, it asks for higher margins in calm times such that margins don't spike as much in stress. For the standard model, this was set at 4\% as covered in Section~\ref{sec:clearing-margin}. Here we look at a simple and explicit trade-off, we replace the reactive VaR margining with flat and constant margining at 3 levels -- 4\%, 8\%, and 12\%. 
 
-The low level at 4\% is a plausible lower bound for an asset as liquid as ES futures, and is the current APC buffer in the standard model. The intermediate 8\% is close to the average margin the reactive VaR model asks for in stress times, and the high level at 12\% covers the peak of margin asked for by the model. Each of these, alongside the reactive VaR margining, is run over 150 seeds and evaluated based on client defaults, member defaults, how far losses travel up the waterfall and how much it costs to post these levels of collateral.
+The low level at 4\% is a plausible lower bound for an asset as liquid as ES futures, and is the current APC buffer in the standard model. The intermediate 8\% is close to the average margin the reactive VaR model asks for in stress times, and the high level at 12\% covers the peak of margin asked for by the model in stress. Each of these, alongside the reactive VaR margining, is run over 150 seeds and evaluated based on client defaults, member defaults, how far losses travel up the waterfall and how much it costs to post these levels of collateral.
 
 The default fund (DF) of the standard model had to be adjusted to account for this construction. The standard model uses a Stressed-loss-over-margin to size the DF, but for the high flat IMs this often led to the DF collapsing to zero. The experiment therefore substitutes a fixed default fund, sized at $10\%$ of the two largest
 members' positions (a cover-2 principle) at $\approx\$12$--$14$B --- comparable to CME Clear's --- and
 applies it to both the flat and reactive arm, so that differences reflect the
-margin rule alone.
+margin rule alone.\\
 
-
-
+\noindent From the results, we see that higher margin does not remove default risk but rather relocates it. As margin rises from a fixed 4\% to 12\%, client defaults fall but member defaults rise (Table~\ref{tab:res-h1}). The proportion of times the default fund is reached also rises. This happens due to a concentration of losses -- client failures become rare but also larger, falling on the member tier. The mechanism behind these is discussed further in Subsection~\ref{sec:res-mech}.
 
 \begin{table}[H]
 \centering\small
@@ -96,7 +95,7 @@ stress-time \emph{peak}.}
 \cmidrule(lr){2-3}\cmidrule(lr){5-6}
 Margin regime & calm & peak & client def. & member def. & reach fund \\
 \midrule
-Flat $4\%$    & $18.1$ & $18.6$ & $14.8\ (4.8)$ & $0.01$ & $1\%$  \\
+Flat $4\%$    & $18.1$ & $18.6$ & $14.8\ (4.8)$ & $0.01$ & $\phantom{0}1\%$  \\
 Flat $8\%$    & $31.7$ & $33.8$ & $11.1\ (4.7)$ & $0.35$ & $30\%$ \\
 Flat $12\%$   & $42.3$ & $46.3$ & $\phantom{0}6.9\ (4.4)$ & $0.55$ & $42\%$ \\
 \midrule
@@ -104,6 +103,8 @@ Reactive ($4\!\to\!11.4\%$) & $18.1$ & $38.5$ & $10.1\ (4.3)$ & $0.33$ & $25\%$ 
 \bottomrule
 \end{tabular}
 \end{table}
+
+The attractiveness of the VaR reactive margin can be easily seen, it offers performance on risk-metrics just as well if not better than the flat 8\% margin. At the same time, it ask for a significantly lower amount of margin in calm periods and not much higher in stress (Figure~\ref{fig:res-h1}). 
 
 \begin{figure}[H]
   \centering
@@ -117,10 +118,25 @@ Reactive ($4\!\to\!11.4\%$) & $18.1$ & $38.5$ & $10.1\ (4.3)$ & $0.33$ & $25\%$ 
   \label{fig:res-h1}
 \end{figure}
 
+\subsection{Mechanism: loss relocation}\label{sec:res-mech}
+
+The relocation of defaults from clients to members as flat IM increases offers an interesting avenue for further analysis. This relocation appears to stem from CM freezes -- CMs that breach their capital adequacy floor (CAR) stop clearing, freezing their clients. The position of these clients then accumulates VM transfers due to negative returns. With higher margins, more cash is taken as margin and hence members breach their CAR earlier in the crash, but at the same this this turns into a trap. Due to the early freeze, members holding onto a large position who cannot liquidate it and default as the market falls. Despite the median of defaulted positions being lower for higher flat margins, the tail of positions on default is a lot higher (Figure~\ref{fig:mech-position}). The CM then assumes this large position that it must liquidate onto a falling market, and the losses on this overwhelm especially the NBCMs causing them to default. 
+
+\begin{figure}[H]\centering
+  \includegraphics[width=\textwidth]{Figures/mech_position.png}
+  \caption{\textbf{The freeze-trap.} Distribution of $|$position$|$ at client default by margin regime
+  (left; box spans $5$--$95\%$, $n=$ defaults per seed) and the median versus the $99$th percentile
+  (right). Higher flat margin yields fewer, smaller-median defaults but a fatter tail; reactive keeps
+  the tail thin.}
+  \label{fig:mech-position}
+\end{figure}
+
+\noindent This highlights the vulnerability these clients face by having only a single clearing connection at the median \citep{ofr_2026}. If a CM facing capital or liquidity constraints decides to freeze offering clearing services to its clients, the clients are left holding onto a possible unwanted position that by regulation must be centrally cleared. At the same time, this is also a consequence of the simplified model design. In reality, an inability to liquidate is not an absolute, but in stressed market situations, porting and finding new members would prove to be difficult. \cite{acosta_smith_2018} also show that capital ratio requirements did leave members less willing to provide clearing services.  
+
 
 \section{A Synthetic Path Alternative}
 
-So far, the results replay a historical period, using the empirical mid price as a Fundamental Value. This creates a natural limitations for this model - it can only be simulated over one path. This section provides an alternative, switching out the FV for a stochastic and synthetic series that reproduces the same stylised facts seen in the stressed period. The parameters of the synthetic FV are then calibrated jointly with agent parameters to reproduce stressed empirical moments, with the calibration yielding a fit in stress near identical to the empirical path, with moments such as volatility clustering being better reproduced (Section~\ref{sec:cal-synth}). The simulation is then run on 80 seeds, yielding 80 different paths for the Fundamental Value, and hence also for the simulated mid. The drift of these paths is similar to the COVID stressed window, but the stochastic runs yield both less and more extreme paths (Figure~\ref{fig:synth-paths}). This is then highly beneficial in simulating various market situations for the study of CCP resilience. 
+So far, the results replay a historical period, using the empirical mid price as a Fundamental Value. This creates a natural limitation for this model - it can only be simulated over one path. This section provides an alternative, switching out the FV for a stochastic and synthetic series that reproduces the same stylised facts seen in the stressed period. The parameters of the synthetic FV are then calibrated jointly with agent parameters to reproduce stressed empirical moments, with the calibration yielding a fit in stress near identical to the empirical path, with moments such as volatility clustering being better reproduced (Section~\ref{sec:cal-synth}). The simulation is then run on 80 seeds, yielding 80 different paths for the Fundamental Value, and hence also for the simulated mid. The drift of these paths is similar to the COVID stressed window, but the stochastic runs yield both less and more extreme paths (Figure~\ref{fig:synth-paths}), which makes it well suited to studying CCP resilience across many stress scenarios.
 
 \begin{figure}[H]
   \centering
@@ -153,7 +169,8 @@ member loss-sharing (L4); $3$ reach CCP cash (L5).}\\
 \end{tabular}
 \end{table}
 
-
+\paragraph{Volatility and drawdowns.} Looking at the paths by realised volatility, the first 2/3rds are benign. There are around 3 client defaults per path, no member defaults and the default fund isn't breached. The defaults and stress are concentrated in the bottom third. Interestingly, the median drawdown of the paths that breach the DF is $29\%$, lower than the median $35\%$ of the paths that never breach. Furthermore, the clearing outcomes carry a robust rank correlation with realised volatility (Spearman
+$\rho\approx0.5$, $p<0.001$, $n=80$) but none with the net drawdown. This can perhaps be explained by the margin mechanism, VM simply transfers from one member to another and is redistributed. IM, on the other hand, drains the balance of all members (Figure~\ref{fig:synth-clearing}). This rises with volatility, and offers an insight into just how draining IM can be with VaR margin models. 
 
 
 \begin{figure}[H]
@@ -161,9 +178,10 @@ member loss-sharing (L4); $3$ reach CCP cash (L5).}\\
   \includegraphics[width=\textwidth]{Figures/synth_clearing.png}
   \caption{\textbf{Clearing on the synthetic stressed ensemble.} Left: per-path clearing stress (client
   defaults) against the path's realised volatility, coloured by the deepest waterfall level reached and sized
-  by member defaults --- stress scales with volatility, and the high-volatility tail breaches the mutualised
-  waterfall. Right: posted initial margin over the window (ensemble median and $10$--$90\%$ band) --- the
+  by member defaults. Right: posted initial margin over the window (ensemble median and $10$--$90\%$ band) --- the
   procyclical ramp is consistent across all $80$ paths, while within a path the calls themselves cluster in
   time.}
   \label{fig:synth-clearing}
 \end{figure}
+
+Overall, the member tier can absorb defaults across the median stressed paths. The extreme paths, however, do push the CCP to its limits, exhausting default funds and tapping into member cash reserves. While the model is a definite simplification, and some results may emerge as a consequence of model design over being an accurate representation of society, it's ability to simulate outcomes across various paths, studying the effects of changes in various parameters and CCP recovery practices offers a definite benefit.  
