@@ -16,9 +16,9 @@ This section simply presents the standard ABM as it is, across both regimes. The
   \label{fig:res-fv}
 \end{figure}
 
-\paragraph{Capital Ratios and Clearing Members.} In the stressed regime, members are pushed towards the capital-adequacy ratio of 8\% that they share. The BCMs occasionally breach and deleverage, and the NBCMs breach less often and freeze. NBCMs also sit with a higher capital ratio on average (Figure~\ref{fig:res-kappa}, but on the rare occasion where they do hit the floor and freeze, they are the only CM type that defaults. 
+\paragraph{Capital Ratios and Clearing Members.} In the stressed regime, members are pushed towards the capital-adequacy ratio of 8\% that they share. The BCMs occasionally breach and deleverage, and the NBCMs breach less often and freeze. NBCMs also sit with a higher capital ratio on average (Figure~\ref{fig:res-kappa}), but on the rare occasion where they do hit the floor and freeze, they are the only CM type that defaults. 
 
-Each stressed seed produce an average $8.3$ client defaults (range $2$--$18$) and no defaults in calm. When the clients default, their CM seizes their IM and absorbs the remaining VM shortfall. The loss is generally contained at the CM and never reaches the default fund. In the rare case of NBCM default, 
+Each stressed seed produces an average $8.3$ client defaults (range $2$--$18$) and no defaults in calm. When the clients default, their CM seizes their IM and absorbs the remaining VM shortfall. The loss is generally contained at the CM and never reaches the default fund. In the rare case of NBCM default, 
 the residual deficit it leaves --- on average
 $\approx\$1.1$B --- is drawn up the waterfall: the defaulter's own default-fund contribution
 ($\approx\$0.11$B) and the CCP's skin-in-the-game ($\approx\$0.12$B) first, then the mutualised pooled
@@ -37,7 +37,7 @@ $\approx\$6.3$B in calm) this draws about $19\%$ of the pooled fund.
 
 \noindent This stylised result from the model stresses the importance for NBCMs to have an available external funding source that is reliable even in stressful market situations. The lack of an own book that can be liquidated to generate liquidity is a vulnerability for the NBCM, even when it freezes all client trading at a capital ratio of 8\%.
 
-\paragraph{Margin is procyclical and clusters.} Posted margin sits at the anti-procyclicality floor of 4\% for the entirety of the calm period and the start of the stressed period, ramping upto a peak of $11.4\%$ in stressed, averaging at $7.7\%$ over the window (Figure~\ref{fig:res-im}), a result of the volatility sensitive VaR margining.
+\paragraph{Margin is procyclical and clusters.} Posted margin sits at the anti-procyclicality floor of 4\% for the entirety of the calm period and the start of the stressed period, ramping up to a peak of $11.4\%$ in stressed, averaging at $7.7\%$ over the window (Figure~\ref{fig:res-im}), a result of the volatility sensitive VaR margining.
 
 \begin{figure}[H]\centering
   \includegraphics[width=\textwidth]{Figures/C_im_path.png}
@@ -169,7 +169,7 @@ member loss-sharing (L4); $3$ reach CCP cash (L5).}\\
 \end{tabular}
 \end{table}
 
-\paragraph{Volatility and drawdowns.} Looking at the paths by realised volatility, the first 2/3rds are benign. There are around 3 client defaults per path, no member defaults and the default fund isn't breached. The defaults and stress are concentrated in the bottom third. Interestingly, the median drawdown of the paths that breach the DF is $29\%$, lower than the median $35\%$ of the paths that never breach. Furthermore, the clearing outcomes carry a robust rank correlation with realised volatility (Spearman
+\paragraph{Volatility and drawdowns.} Looking at the paths by realised volatility, the first two-thirds are benign. There are around 3 client defaults per path, no member defaults and the default fund isn't breached. The defaults and stress are concentrated in the bottom third. Interestingly, the median drawdown of the paths that breach the DF is $29\%$, lower than the median $35\%$ of the paths that never breach. Furthermore, the clearing outcomes carry a robust rank correlation with realised volatility (Spearman
 $\rho\approx0.5$, $p<0.001$, $n=80$) but none with the net drawdown. This can perhaps be explained by the margin mechanism, VM simply transfers from one member to another and is redistributed. IM, on the other hand, drains the balance of all members (Figure~\ref{fig:synth-clearing}). This rises with volatility, and offers an insight into just how draining IM can be with VaR margin models. 
 
 
@@ -184,4 +184,4 @@ $\rho\approx0.5$, $p<0.001$, $n=80$) but none with the net drawdown. This can pe
   \label{fig:synth-clearing}
 \end{figure}
 
-Overall, the member tier can absorb defaults across the median stressed paths. The extreme paths, however, do push the CCP to its limits, exhausting default funds and tapping into member cash reserves. While the model is a definite simplification, and some results may emerge as a consequence of model design over being an accurate representation of society, it's ability to simulate outcomes across various paths, studying the effects of changes in various parameters and CCP recovery practices offers a definite benefit.  
+Overall, the member tier can absorb defaults across the median stressed paths. The extreme paths, however, do push the CCP to its limits, exhausting default funds and tapping into member cash reserves. While the model is a definite simplification, and some results may emerge as a consequence of model design over being an accurate representation of society, its ability to simulate outcomes across various paths, studying the effects of changes in various parameters and CCP recovery practices offers a definite benefit.  

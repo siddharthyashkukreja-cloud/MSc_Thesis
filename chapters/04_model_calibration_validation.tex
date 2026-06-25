@@ -9,11 +9,11 @@
 % %  to fill from output/relock/ (and output/relock_gbm/ for the SV-MJD robustness).
 % %==============================================================================
 
-This section presents the methodology for calibrating the agent based financial market simulation. As this serves as the first stage and base of the clearing layer, the market simulation should be well calibrated and able to reproduce the features of real market returns. A common method to do this, and the one adopted by this model, is the reproduction of the moments of empirical returns through the simulation. This chapter describes the data used, the method of calibration, and a validation of the calibrated parameters. The chosen moments are the stylised facts of returns we see empirically - the distribution of returns, heavy tails, absence of autocorrelation and volatility clustering. One point to mention is that the market simulation is calibrated in isolation, the freeze-out and liquidation mechanics of clearing have an impact on market prices and returns, but including the clearing layer in the calibration would be computationally prohibitive. The model calibration and validation for the synthetic FV paths is reported in \ref{sec:cal-synth}.
+This section presents the methodology for calibrating the agent based financial market simulation. As this serves as the first stage and base of the clearing layer, the market simulation should be well calibrated and able to reproduce the features of real market returns. A common method to do this, and the one adopted by this model, is the reproduction of the moments of empirical returns through the simulation. This chapter describes the data used, the method of calibration, and a validation of the calibrated parameters. The chosen moments are the stylised facts of returns we see empirically - the distribution of returns, heavy tails, absence of autocorrelation and volatility clustering. One point to mention is that the market simulation is calibrated in isolation, the freeze-out and liquidation mechanics of clearing have an impact on market prices and returns, but including the clearing layer in the calibration would be computationally prohibitive. The model calibration and validation for the synthetic FV paths is reported in Section~\ref{sec:cal-synth}.
 
 \section{Data and Regimes}
 
-The dataset used for calibration is the E-mini S\&P futures at a one minute frequency, matching the model time steps. There are two separate regimes, a calm regime and a stressed regime. The calm regime spans a calm stretch in late 2019, and the stressed regime includes data from the early COVID-19 window, which was referred to as the most significant test of the resilience of financial markets since the GFC \citep{bcbs_cpmi_iosco_2022}. Parameters are calibrated separately on both regimes, as they differ substantially in volatility, microstructure and return distribution. Returns are intraday log-returns of the mid price, and some summary statistics are reported in \ref{tab:cal-data}.
+The dataset used for calibration is the E-mini S\&P futures at a one minute frequency, matching the model time steps. There are two separate regimes, a calm regime and a stressed regime. The calm regime spans a calm stretch in late 2019, and the stressed regime includes data from the early COVID-19 window, which was referred to as the most significant test of the resilience of financial markets since the GFC \citep{bcbs_cpmi_iosco_2022}. Parameters are calibrated separately on both regimes, as they differ substantially in volatility, microstructure and return distribution. Returns are intraday log-returns of the mid price, and some summary statistics are reported in Table~\ref{tab:cal-data}.
 
 \begin{table}[h]
 \centering
@@ -35,7 +35,7 @@ Stressed (2020) & 73 & $12.40$ & $67.1$ & $224$ & $-0.15$ & $3.38$ & $-35.7$ \\
 \end{tabular}
 \begin{tablenotes}[flushleft]\footnotesize
 \item One-minute returns are intraday (overnight excluded); the overnight gap is the
-close-to-open session-boundary return; daily returns are close-to-close. bps${}=10^{-4}$. S
+close-to-open session-boundary return; daily returns are close-to-close. bps${}=10^{-4}$.
 \item The overnight gap is large relative to the per-minute move --- its SD is $12$--$18\times$ the
 one-minute SD, and it accounts for $\approx 31\%$ (calm) and $\approx 46\%$ (stressed) of total return
 variance. ``Max DD'' is the largest peak-to-trough drawdown of the mid over
@@ -135,7 +135,7 @@ set. The selection of the training set combines a selection with the smallest pr
 \end{enumerate}
 
 The quality of the surrogate model is reported using its $R^2$, with a high $R^2$
-indicating that the surrogate emulated the model with high accuracy. The model had an $R^2$ of \textbf{0.90} for the calm regime and \textbf{0.88} for the stressed regime. Calibrated parameters are reported in the \ref{ch:appendix}.
+indicating that the surrogate emulated the model with high accuracy. The model had an $R^2$ of \textbf{0.90} for the calm regime and \textbf{0.88} for the stressed regime. Calibrated parameters are reported in Appendix~\ref{ch:appendix}.
 
 \section{Validation}
 \label{sec:cal-validation}
@@ -262,7 +262,7 @@ Hill tail index             & $2.73$    & $2.71$    & $0.1$ & yes \\
 \end{tabular}
 \end{table}
 
-\noindent The calibration was then validated on 80 fresh stressed paths. The optimum reproduces the stylised facts well, even more so than the standard model. Even long-horizon volatility clustering is reproduced to a large extent. The one remaining minor artifact is a slightly stronger bid-ask bounce than in empirical data, which is still a large improvement over the standard model, and is an artefact of the thin LOB at a one minute frequency. The Mean-Coverage ratio cannot be directly applied to this model, as the stochastic paths vary by large amounts. A simpler validation is performed, with a confidence interval of the empirical moments constructed based on their standard deviation from the bootstrap method, and the paths averaged to look at stylised facts. The loss function $D(\theta^\star)$ is lower than validation loss on the standard stressed model, signalling a better fit.
+\noindent The calibration was then validated on 80 fresh stressed paths. The optimum reproduces the stylised facts well, even more so than the standard model. Even long-horizon volatility clustering is reproduced to a large extent. The one remaining minor artifact is a slightly stronger bid-ask bounce than in empirical data, which is still a large improvement over the standard model, and is an artefact of the thin LOB at a one minute frequency. The Moment Coverage Ratio cannot be directly applied to this model, as the stochastic paths vary by large amounts. A simpler validation is performed, with a confidence interval of the empirical moments constructed based on their standard deviation from the bootstrap method, and the paths averaged to look at stylised facts. The loss function $D(\theta^\star)$ is lower than validation loss on the standard stressed model, signalling a better fit.
 
 
 \begin{figure}[H]

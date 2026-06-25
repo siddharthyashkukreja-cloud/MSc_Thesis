@@ -20,11 +20,11 @@ and were dropped.  The traders are either Bank Clearing Members trading on their
 \section{Financial Market Simulation}
 \label{sec:model-market}
 
-This section presents the design of the financial market simulation:-
+This section presents the design of the financial market simulation:
 
 \subsection{Limit Order Book}
 
-The market consists of a single asset discrete time Limit Order Book (LOB), with each step corresponding to one minute of trading. At every one minute step, agents submit a limit or market order, with limit orders resting on the book till they are filled, cancelled, or replaced. Orders are matched by price-time priority, and the minimum tick-size corresponds to that of the E-mini: 0.25 index points equating to \$ 12.50 per contract. The mid-price is the average of the best bid and best ask after each auction,
+The market consists of a single asset discrete time Limit Order Book (LOB), with each step corresponding to one minute of trading. At every one minute step, agents submit a limit or market order, with limit orders resting on the book till they are filled, cancelled, or replaced. Orders are matched by price-time priority, and the minimum tick-size corresponds to that of the E-mini: 0.25 index points equating to \$12.50 per contract. The mid-price is the average of the best bid and best ask after each auction,
 \begin{equation}
   P_t = \frac{b_t + a_t}{2},
 \end{equation}
@@ -36,11 +36,11 @@ At a session boundary/new day the book is not cleared but repriced. The book is 
 \subsection{Trading Agents}
 \label{sec:agents}
 
-The book is populated by 100 trading agents of three types - 40 fundamental traders (FT), 20 momentum traders (MT), and 40 noise traders/zero-intelligence traders (ZI). The ZIs serve as a constant source of liquidity to the book, the FTs keep asset price anchored to an exogenous fundamental signal, and the MTs amplify price movements and trade on trend. Ten FTs also serve as BCMs, and the remaining 30 alongside ZI and MT traders serve as clients of other BCMs and NBCMs. The trading strategies of each trader and explained below.  Order sizes are drawn uniformly from $[1, 10]$ for each trader. Each model order unit represents a block of ES contracts — 18 in the calm regime, 32 in the stressed — chosen such that the simulated per-minute volume matches the empirical ES volume ($\sim2,000$ and $\sim3,500$ contracts per minute).
+The book is populated by 100 trading agents of three types - 40 fundamental traders (FT), 20 momentum traders (MT), and 40 noise traders/zero-intelligence traders (ZI). The ZIs serve as a constant source of liquidity to the book, the FTs keep asset price anchored to an exogenous fundamental signal, and the MTs amplify price movements and trade on trend. Ten FTs also serve as BCMs, and the remaining 30 alongside ZI and MT traders serve as clients of other BCMs and NBCMs. The trading strategies of each trader are explained below.  Order sizes are drawn uniformly from $[1, 10]$ for each trader. Each model order unit represents a block of ES contracts — 18 in the calm regime, 32 in the stressed — chosen such that the simulated per-minute volume matches the empirical ES volume ($\sim2,000$ and $\sim3,500$ contracts per minute).
 
 \subsubsection{Fundamental Trader}
 
-Fundamental traders trade based on the fundamental value (FV) of the stock, with the FV $V_t$ fed in as an exogenous signal. To introduce heterogeneity, each FT carries a fixed belief offset $z_i \sim \mathcal{N}(0,1)$ drawn at initialisation, such that each FT carries its own private valuation. At each step, fundamental traders place a limit order at a reservation $R^{i}_t$ from the fundamental value (FV) signal:- 
+Fundamental traders trade based on the fundamental value (FV) of the stock, with the FV $V_t$ fed in as an exogenous signal. To introduce heterogeneity, each FT carries a fixed belief offset $z_i \sim \mathcal{N}(0,1)$ drawn at initialisation, such that each FT carries its own private valuation. At each step, fundamental traders place a limit order at a reservation $R^{i}_t$ from the fundamental value (FV) signal: 
 
 \begin{equation}
   R^{i}_t = V_t\,\big(1 + z_i\,c_f\,\sigma_t\big),
@@ -116,7 +116,7 @@ Both fundamentals carry an overnight gap at the session boundaries. In ES data, 
 %==============================================================================
 \section{Central Clearing Layer}
 
-The clearing layer offers a simplified but realistic representation of CCP practises, complete with a margin cycle and a default waterfall framework. It guaranties the trades executed in the exchange layer of Section~\ref{sec:model-market}. The network consists of the CCP as a central node, connected to a tier of Bank Clearing Members (BCMs) and Non-Bank Clearing Members (NBCMs), similar to the CCP risk model of \cite{simudyne_odd}, and extends it with a layer of clients that clear through the NBCMs and some of the BCMs. Constants used in the clearing layer, such as balance sheet sizes of members and default fund and margin sizing, are based on regulatory standards or CCP disclosures. The clearing layer and the market layer are connected through a feedback loop; prices formed in the market layer drive margin calls and concentrated portfolios, leading to trading freezes or liquidations when clients and CMs approach capital ratios, which lead to higher transactions costs and lower liquidity in the market layer, further impacting balance sheets.  
+The clearing layer offers a simplified but realistic representation of CCP practises, complete with a margin cycle and a default waterfall framework. It guarantees the trades executed in the exchange layer of Section~\ref{sec:model-market}. The network consists of the CCP as a central node, connected to a tier of Bank Clearing Members (BCMs) and Non-Bank Clearing Members (NBCMs), similar to the CCP risk model of \cite{simudyne_odd}, and extends it with a layer of clients that clear through the NBCMs and some of the BCMs. Constants used in the clearing layer, such as balance sheet sizes of members and default fund and margin sizing, are based on regulatory standards or CCP disclosures. The clearing layer and the market layer are connected through a feedback loop; prices formed in the market layer drive margin calls and concentrated portfolios, leading to trading freezes or liquidations when clients and CMs approach capital ratios, which lead to higher transactions costs and lower liquidity in the market layer, further impacting balance sheets.  
 
 %------------------------------------------------------------------------------
 
