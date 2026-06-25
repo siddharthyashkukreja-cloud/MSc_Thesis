@@ -180,7 +180,7 @@ Surrogate $R^2$                           & 0.90 & 0.88 \\
 \end{table}
 
 
-For the calm regime, as can be seen, some moments are very accurately estimated. Long-horizon volatility clustering, however, appears to be structurally unreachable. We see weaker volatility clustering in the model than we see in empirical returns, and this is more prominent for the calm regime. For the stressed regime, we see a better model fit overall. While long horizon volatility clustering is still below empirical, it is much closer. Lag-1 and 2 autocorrelation indicates that the model suffers from a bid-ask bounce, which is improved in the stressed regime. The loss function $\theta$ is also lower for the stressed regime, signalling a better fit of parameters there.
+For the calm regime, as can be seen, some moments are very accurately estimated. Long-horizon volatility clustering, however, appears to be structurally unreachable. We see weaker volatility clustering in the model than we see in empirical returns, and this is more prominent for the calm regime. For the stressed regime, we see a better model fit overall. While long horizon volatility clustering is still below empirical, it is much closer. Lag-1 and 2 autocorrelation indicates that the model suffers from a bid-ask bounce, which is improved in the stressed regime. The loss function $D(\theta^\star)$ is also lower for the stressed regime, signalling a better fit of parameters there.
 
 \begin{figure}[H]
   \centering
@@ -262,7 +262,7 @@ Hill tail index             & $2.73$    & $2.71$    & $0.1$ & yes \\
 \end{tabular}
 \end{table}
 
-\noindent The calibration was then validated on 80 fresh stressed paths. The optimum reproduces the stylised facts well, even more so than the standard model. Even long-horizon volatility clustering is reproduced to a large extent. The one remaining minor artifact is a slightly stronger bid-ask bounce than in empirical data, which is still a large improvement over the standard model, and is an artefact of the thin LOB at a one minute frequency. The Mean-Coverage ratio cannot be directly applied to this model, as the stochastic paths vary by large amounts. A simpler validation is performed, with a confidence interval of the empirical moments constructed based on their standard deviation from the bootstrap method, and the paths averaged to look at stylised facts. The loss function $\theta$ is lower than for the standard stressed model, signalling a better fit.
+\noindent The calibration was then validated on 80 fresh stressed paths. The optimum reproduces the stylised facts well, even more so than the standard model. Even long-horizon volatility clustering is reproduced to a large extent. The one remaining minor artifact is a slightly stronger bid-ask bounce than in empirical data, which is still a large improvement over the standard model, and is an artefact of the thin LOB at a one minute frequency. The Mean-Coverage ratio cannot be directly applied to this model, as the stochastic paths vary by large amounts. A simpler validation is performed, with a confidence interval of the empirical moments constructed based on their standard deviation from the bootstrap method, and the paths averaged to look at stylised facts. The loss function $D(\theta^\star)$ is lower than validation loss on the standard stressed model, signalling a better fit.
 
 
 \begin{figure}[H]
