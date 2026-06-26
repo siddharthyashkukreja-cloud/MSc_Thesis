@@ -77,7 +77,7 @@ members' positions (a cover-2 principle) at $\approx\$12$--$14$B --- comparable 
 applies it to both the flat and reactive arm, so that differences reflect the
 margin rule alone.\\
 
-\noindent From the results, we see that higher margin does not remove default risk but rather relocates it. As margin rises from a fixed 4\% to 12\%, client defaults fall but member defaults rise (Table~\ref{tab:res-h1}). The proportion of times the default fund is reached also rises. This happens due to a concentration of losses -- client failures become rare but also larger, falling on the member tier. The mechanism behind these is discussed further in Subsection~\ref{sec:res-mech}.
+\noindent From the results, we see that higher margin does not remove default risk but rather relocates it. As margin rises from a fixed 4\% to 12\%, client defaults fall but member defaults rise (Table~\ref{tab:res-h1}). The proportion of times the default fund is reached also rises. This happens due to a concentration of losses -- client failures become rare but also larger, falling on the member tier. The mechanism behind these is discussed further in Subsection~\ref{sec:res-mech}. While the client default decline is significant, member defaults and mutualisation are rare events and hence noisy and not statistically significant. They are, however, significant in their direction and robust to different clearing constants such as a different house capital ratio floor, default fund level and CCP recovery amount. 
 
 \begin{table}[H]
 \centering\small
@@ -104,7 +104,7 @@ Reactive ($4\!\to\!11.4\%$) & $18.1$ & $38.5$ & $10.1\ (4.3)$ & $0.33$ & $25\%$ 
 \end{tabular}
 \end{table}
 
-The attractiveness of the VaR reactive margin can be easily seen, it offers performance on risk-metrics just as well if not better than the flat 8\% margin. At the same time, it ask for a significantly lower amount of margin in calm periods and not much higher in stress (Figure~\ref{fig:res-h1}). 
+The attractiveness of the VaR reactive margin can be easily seen, it offers performance on risk-metrics just as well if not better than the flat 8\% margin. At the same time, it asks for a significantly lower amount of margin in calm periods and not much higher in stress (Figure~\ref{fig:res-h1}). 
 
 \begin{figure}[H]
   \centering
@@ -134,7 +134,7 @@ The relocation of defaults from clients to members as flat IM increases offers a
 \noindent This highlights the vulnerability these clients face by having only a single clearing connection at the mode \citep{ofr_2026}. If a CM facing capital or liquidity constraints decides to freeze offering clearing services to its clients, the clients are left holding onto a possible unwanted position that by regulation must be centrally cleared. At the same time, this is also a consequence of the simplified model design. In reality, an inability to liquidate is not an absolute, but in stressed market situations, porting and finding new members would prove to be difficult. \cite{acosta_smith_2018} also show that capital ratio requirements did leave members less willing to provide clearing services.  
 
 
-\section{A Synthetic Path Alternative}
+\section{A Synthetic Path Alternative}\label{sec:res-synth}
 
 So far, the results replay a historical period, using the empirical mid price as a Fundamental Value. This creates a natural limitation for this model - it can only be simulated over one path. This section provides an alternative, switching out the FV for a stochastic and synthetic series that reproduces the same stylised facts seen in the stressed period. The parameters of the synthetic FV are then calibrated jointly with agent parameters to reproduce stressed empirical moments, with the calibration yielding a fit in stress near identical to the empirical path, with moments such as volatility clustering being better reproduced (Section~\ref{sec:cal-synth}). The simulation is then run on 80 seeds, yielding 80 different paths for the Fundamental Value, and hence also for the simulated mid. The drift of these paths is similar to the COVID stressed window, but the stochastic runs yield both less and more extreme paths (Figure~\ref{fig:synth-paths}), which makes it well suited to studying CCP resilience across many stress scenarios.
 
@@ -146,7 +146,7 @@ So far, the results replay a historical period, using the empirical mid price as
   \label{fig:synth-paths}
 \end{figure}
 
-\paragraph{Looking at the tail situations of a tail situation.} A point to note is that these paths are already based on a stressed environment, one that would form the tail of any normal distribution. The median path here is hence already a tail path. We see that despite this, for the median path, there are only 3 client defaults, no member defaults, and the default fund is never drawn (Table~\ref{tab:synth-clearing}). Across 80 such extreme paths, only 14 reach the mutualised default fund in this stylised model. 
+\paragraph{A tail within a tail.} A point to note is that these paths are already based on a stressed environment, one that would form the tail of any normal distribution. The median path here is hence already a tail path. We see that despite this, for the median path, there are only 3 client defaults, no member defaults, and the default fund is never drawn (Table~\ref{tab:synth-clearing}). Across 80 such extreme paths, only 14 reach the mutualised default fund in this stylised model. 
 
 \begin{table}[H]
 \centering\small

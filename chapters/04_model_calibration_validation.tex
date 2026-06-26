@@ -6,8 +6,8 @@
 % %  final calibration runs are now LOCKED (D65, output/relock/): this chapter fixes the
 % %  METHODOLOGY; calibrated values, fit tables, loss surfaces, and the ablation/robustness
 % %  numbers are reported in the results chapter. [NUMBERS: ...] marks the spots
-% %  to fill from output/relock/ (and output/relock_gbm/ for the SV-MJD robustness).
-% %==============================================================================
+\href{}{% %  to fill from output/relock/ (and output/relock_gbm/ for the SV-MJD robustness).
+}% %==============================================================================
 
 This section presents the methodology for calibrating the agent based financial market simulation. As this serves as the first stage and base of the clearing layer, the market simulation should be well calibrated and able to reproduce the features of real market returns. A common method to do this, and the one adopted by this model, is the reproduction of the moments of empirical returns through the simulation. This chapter describes the data used, the method of calibration, and a validation of the calibrated parameters. The chosen moments are the stylised facts of returns we see empirically - the distribution of returns, heavy tails, absence of autocorrelation and volatility clustering. One point to mention is that the market simulation is calibrated in isolation, the freeze-out and liquidation mechanics of clearing have an impact on market prices and returns, but including the clearing layer in the calibration would be computationally prohibitive. The model calibration and validation for the synthetic FV paths is reported in Section~\ref{sec:cal-synth}.
 
@@ -47,7 +47,7 @@ comparable number of full RTH sessions (75 vs 73), so the two samples are of mat
 \end{table}
 
 
-\noindent Limit order depth placement for Momentum and Noise traders follows a geometric law calibrated besides the other parameters, but this can also be directly estimated from L2 data. 
+\noindent Limit order depth placement for Momentum and Noise traders follows a geometric law calibrated alongside the other parameters, but it can also be directly estimated from L2 data. 
 
 \section{Loss Function: Stylised Facts Distance}
 \label{sec:cal-loss}
@@ -67,7 +67,7 @@ The calibrated parameter vector is the minimisation of this distance over the ad
 \Theta} D(\theta).
 \end{equation} 
 
-\noindent A description of the five stylised facts are given below.
+\noindent A description of the five stylised facts is given below.
 
 \paragraph{Distribution (KS).} The Kolmogorov--Smirnov statistic, from the KS test which tests for the equality of probability distributions.
 $\mathrm{KS}=\sup_x|F_{\mathrm{sim}}(x)-F_{\mathrm{emp}}(x)|$ is the largest gap (supremum) between the simulated
@@ -111,7 +111,7 @@ This combination of the KS statistic and Hill tail index is deliberate, using ju
 \label{eq:cal-w}
 w_c = \frac{1}{s_c}, \qquad c \in \{\mathrm{KS},\,V,\,\mathrm{ACF1},\,\mathrm{ACF2},\,\mathrm{Hill}\},
 \end{equation}
-such that each term is measured in the units of its sample noise. This has the added benefit that down-weighting noisy moments such that the loss function offers higher weight to moments that are more consistently identified across the sample. 
+such that each term is measured in the units of its sample noise. This also down-weights noisy moments, so the loss function offers higher weight to moments that are more consistently identified across the sample. 
 The $s_c$ come from a moving-block bootstrap of the empirical returns \citep{kunsch_1989}, day long blocks are taken as independent samples, and the moments are recomputed on each resample/block. For the multi-lag components $\mathrm{ACF1}$ and $\mathrm{ACF2}$ the reciprocal-SD
 standardisation is applied to each lag inside the average. \cite{franke_westerhoff_2012} made use of the full inverse-covariance matrix for weighting and \cite{gao_2022_hfabm} made use of inverse variance, as the former is near singular for these losses and for the latter the return standard deviation dominates due to low sampling variability, and hence the inverse of the standard deviation is employed. 
 
@@ -119,7 +119,7 @@ standardisation is applied to each lag inside the average. \cite{franke_westerho
 \section{Calibration Methodology}
 \label{sec:cal-method}
 
-The ABM consists of several parameters that need calibration. Running a multi-day simulation over several random parameter sets to find an optimal set which minimises the loss function would be computationally very expensive. For this model, seven parameters $(c_f,\ \lambda,\ \gamma_M,\ \alpha_{zi},\ \mu_{zi},\ \delta_{zi},\ p_d)$ need calibration across two different regimes. The paper therefore uses a surrogate modelling technique to lower this computational cost. The technique was  pioneered by \cite{lamperti_2018}, who train an XGBoost model to classify positive and negative calibrations to find an optimal set of parameters for an Agent Based Model. It was extended by \cite{gao_2022_xgb}, who train the XGBoost model to predict the loss function for a given set of parameter in place of running the simulator.
+The ABM consists of several parameters that need calibration. Running a multi-day simulation over several random parameter sets to find an optimal set which minimises the loss function would be computationally very expensive. For this model, seven parameters $(c_f,\ \lambda,\ \gamma_M,\ \alpha_{zi},\ \mu_{zi},\ \delta_{zi},\ p_d)$ need calibration across two different regimes. The paper therefore uses a surrogate modelling technique to lower this computational cost. The technique was  pioneered by \cite{lamperti_2018}, who train an XGBoost model to classify positive and negative calibrations to find an optimal set of parameters for an Agent Based Model. It was extended by \cite{gao_2022_xgb}, who train the XGBoost model to predict the loss function for a given set of parameters in place of running the expensive simulator.
 
 \subsection{Surrogate Modelling}
 

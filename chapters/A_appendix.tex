@@ -7,12 +7,11 @@
 \section{Agent-Layer Parameters}\label{app:params}
 This appendix lists the agent (market-layer) parameters of the model. Table~\ref{tab:app-agent} gives the
 standard model, calibrated separately for the calm and stressed regimes by surrogate-assisted simulated
-moments; \textsc{fixed} parameters are set by design and take one value in both regimes, while the
-asset/regime constants ($\sigma_v$, contract lot, drift) are read from the data. Table~\ref{tab:app-synth}
+moments;  Table~\ref{tab:app-synth}
 gives the synthetic extension, in which five agent parameters are re-calibrated \emph{jointly} with the four
 parameters of the two-factor stochastic-volatility fundamental. The \texttt{Code} column gives the matching
 identifier in the released model (\texttt{model/globals.py}). The clearing tier --- ten banking and five
-non-banking members (five carrying client books) and ninety clients --- uses risk parameters set by design,
+non-banking members (five carrying client books) and ninety clients --- use risk parameters set by design,
 not reproduced here.
 
 \begin{table}[ht]
@@ -74,7 +73,7 @@ $\rho$        & \texttt{ratio}        & reversal ratio $\alpha_{\text{slow}}/\al
 $\sigma_d$    & \texttt{sigma\_d}     & base volatility level                  & $1.29\times10^{-3}$  & calibrated \\
 \addlinespace
 \multicolumn{5}{@{}l}{\itshape Fundamental: measured, derived, or fixed} \\
-$\alpha_{\text{fast}}$ & \texttt{alpha\_fast} & fast OU reversal, $\min^{-1}$ (half-life $\approx1$ day) & $1.78\times10^{-3}$ & measured \\
+$\alpha_{\text{fast}}$ & \texttt{alpha\_fast} & fast OU reversal, $\min^{-1}$ (half-life $\approx1$ day) & $1.78\times10^{-3}$ & calibrated \\
 $\alpha_{\text{slow}}$ & \texttt{alpha\_slow} & slow OU reversal $=\rho\,\alpha_{\text{fast}}$ (half-life $\approx3$ days) & $5.68\times10^{-4}$ & derived \\
 $v_{\text{fast}}$      & \texttt{v\_fast}     & fast-factor variance $=(1-w)\,\nu^2$   & 0.434                & derived \\
 $v_{\text{slow}}$      & \texttt{v\_slow}     & slow-factor variance $=w\,\nu^2$       & 0.447                & derived \\
